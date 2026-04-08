@@ -1,41 +1,39 @@
-# OMOP CDM Exploration and Patient-Level Prediction Prototypes
+# Experimental Sandbox Branch
 
-This repository contains R scripts and utilities for working with OMOP Common Data Model (CDM) data, focusing on:
-- connecting to OMOP CDM stored in DuckDB,
-- exploring and understanding the CDM structure,
-- building simple cohorts,
-- experimenting with patient-level prediction (PLP) workflows.
+> **Note:** This branch is a personal sandbox for temporary tests, ideas, and code experiments.
+> It is not intended to be merged into `main` as-is.
 
-The main branch is intended for the **core project**, while a separate branch (`feature/synpuf-plp-demo`) hosts a self-contained demo based on SynPUF 1k.
+This branch is used to:
 
-## Project structure (main branch)
+- try ideas quickly,
+- test code snippets or alternative approaches,
+- keep a trace of experiments in Git,
+- come back later if a prototype becomes useful.
 
-The exact structure may evolve, but the main branch typically contains:
+## Purpose
 
-- Core R scripts for:
-  - connecting to your OMOP CDM instance,
-  - running exploratory queries,
-  - preparing data for analyses.
-- Configuration / utility code (e.g. connection helpers, environment setup).
-- Documentation for how to run analyses in your actual environment.
+This branch is intentionally flexible and may contain:
 
+- incomplete scripts,
+- temporary debugging code,
+- rough prototypes,
+- quick proof-of-concept implementations.
 
-## Getting started (main project)
+Code here should be treated as **experimental**, not stable.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/LohanWyon/CERTH-Project.git
-   cd <your-repo-folder>
-   ```
+## Workflow
 
-2. Check out the main branch:
-   ```bash
-   git checkout main
-   ```
+Typical use cases for this branch:
 
-3. Open the project in RStudio or your preferred IDE and follow the instructions in the project-specific scripts/documentation (connection settings, CDM schema names, etc.).
+- test a new idea before integrating it properly elsewhere,
+- keep a record of exploratory work,
+- revisit an old experiment by checking out this branch again later,
+- copy useful pieces into a cleaner feature branch or into `main` when needed.
 
-## Notes
+## Important note
 
-- The SynPUF demo is based on a small, synthetic dataset and uses simplified cohort definitions and covariates. It is meant for **learning and testing**, not for real clinical modelling.
-- The main branch should remain focused on the actual project data and workflows.
+This branch should remain separate from the main project history.
+
+- It can be cloned, checked out, and read freely.
+- It should not be merged into `main` without cleanup and review.
+- If a specific experiment becomes useful, it is better to move it into a dedicated feature branch.
