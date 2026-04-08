@@ -1,60 +1,73 @@
 # ============================================================
-# SynPUF 1k — Script reproductible OMOP CDM (sans cdm_from_con)
+# SynPUF 1k — Reproducible OMOP CDM Access Script
 # ============================================================
 
-# 1) Installer les packages manquants
+
+# 1) Install missing packages
 packages <- c("CDMConnector", "duckdb", "DBI", "dplyr")
 to_install <- packages[!sapply(packages, requireNamespace, quietly = TRUE)]
+
 
 if (length(to_install) > 0) {
   install.packages(to_install)
 }
 
-# 2) Charger les packages
+
+# 2) Load required packages
 library(CDMConnector)
 library(duckdb)
 library(DBI)
 library(dplyr)
 
-# 3) Définir automatiquement un dossier local pour Eunomia / SynPUF
+
+# 3) Automatically define a local folder for Eunomia / SynPUF data
 data_folder <- file.path(Sys.getenv("USERPROFILE"), "Documents", "eunomia_data")
 dir.create(data_folder, showWarnings = FALSE, recursive = TRUE)
 
+
 Sys.setenv(EUNOMIA_DATA_FOLDER = data_folder)
 
-cat("Dossier de données :", data_folder, "\n")
-cat("Variable EUNOMIA_DATA_FOLDER =", Sys.getenv("EUNOMIA_DATA_FOLDER"), "\n")
 
-# 4) Télécharger ou réutiliser SynPUF 1k
+cat("Data folder:", data_folder, "\n")
+cat("EUNOMIA_DATA_FOLDER variable =", Sys.getenv("EUNOMIA_DATA_FOLDER"), "\n")
+
+
+# 4) Download or reuse SynPUF 1k dataset
 synpuf_dir <- eunomiaDir("synpuf-1k")
-cat("Chemin du dataset :", synpuf_dir, "\n")
+cat("Dataset path:", synpuf_dir, "\n")
 
-# 5) Ouvrir la base DuckDB
+
+# 5) Open the DuckDB database
 con <- DBI::dbConnect(duckdb::duckdb(), synpuf_dir)
 
-# 6) Récupérer les tables OMOP comme tbl dplyr
+
+# 6) Access OMOP tables as dplyr tbl objects
 person_tbl <- dplyr::tbl(con, "person")
 visit_tbl  <- dplyr::tbl(con, "visit_occurrence")
 
-# 7) Vérifications de base
-cat("\n=== Tables disponibles ===\n")
+
+# 7) Basic checks
+cat("\n=== Available tables ===\n")
 print(DBI::dbListTables(con))
 
-cat("\n=== Nombre de patients ===\n")
+
+cat("\n=== Number of patients ===\n")
 print(
   person_tbl %>%
     tally() %>%
     collect()
 )
 
-cat("\n=== Aperçu de person ===\n")
+
+cat("\n=== Preview of person table ===\n")
 print(
   person_tbl %>%
     head(5) %>%
     collect()
 )
 
-cat("\n=== Nombre de visites par type ===\n")
+
+cat("\n=== Number of visits by type ===\n")
 print(
   visit_tbl %>%
     group_by(visit_concept_id) %>%
@@ -63,7 +76,8 @@ print(
     collect()
 )
 
-cat("\n=== Répartition par sexe ===\n")
+
+cat("\n=== Gender distribution ===\n")
 print(
   person_tbl %>%
     group_by(gender_concept_id) %>%
@@ -72,10 +86,12 @@ print(
     collect()
 )
 
-# 8) Exemple de jointure simple PERSON + VISIT_OCCURRENCE
-cat("\n=== Visites par sexe et type de visite ===\n")
+
+# 8) Example: simple join between PERSON and VISIT_OCCURRENCE
+cat("\n=== Visits by gender and visit type ===\n")
 person_visit <- visit_tbl %>%
   inner_join(person_tbl, by = "person_id")
+
 
 print(
   person_visit %>%
@@ -85,5 +101,6 @@ print(
     collect()
 )
 
-# 9) Fermer la connexion si besoin
+
+# 9) Close the connection if needed
 DBI::dbDisconnect(con, shutdown = TRUE)
