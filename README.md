@@ -35,6 +35,14 @@ The exact structure may evolve, but the main branch typically contains:
 
 3. Open the project in RStudio or your preferred IDE and follow the instructions in the project-specific scripts/documentation (connection settings, CDM schema names, etc.).
 
+
+## Contribution and Git workflow
+
+- New work should be done on dedicated branches (for example `feature/...`, `fix/...`, or `experiment/...`).
+- Changes to `main` should go through a **pull request**.
+- The `main` branch is protected: merging into `main` requires a PR and at least one review/approval.
+
+
 ## Notes
 
 - The SynPUF demo is based on a small, synthetic dataset and uses simplified cohort definitions and covariates. It is meant for **learning and testing**, not for real clinical modelling.
