@@ -1,12 +1,4 @@
-SynPUF 1k – OMOP + PLP-style Demo
-This branch contains a small, step-by-step workflow to explore an OMOP CDM dataset (SynPUF 1k via Eunomia), create simple demo cohorts, and run a minimal prediction model in R using DuckDB.
-
-The goal is educational / prototyping, not a clinically meaningful study.
-
-Prerequisites
-- R ≥ 4.5
-- Internet access for installing R packages
-- # SynPUF 1k – OMOP + PLP-style Demo
+# SynPUF 1k – OMOP + PLP-style Demo
 
 This branch contains a small, step-by-step workflow to explore an OMOP CDM dataset (SynPUF 1k via Eunomia), create simple demo cohorts, and run a minimal prediction model in R using DuckDB. The goal is educational/prototyping, not a clinically meaningful study.
 
