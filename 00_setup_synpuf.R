@@ -31,6 +31,15 @@ Sys.setenv(EUNOMIA_DATA_FOLDER = data_folder)
 cat("Data folder:", data_folder, "\n")
 cat("EUNOMIA_DATA_FOLDER =", Sys.getenv("EUNOMIA_DATA_FOLDER"), "\n")
 
-# 4) Get or download SynPUF 1k and store DuckDB path in a variable
-synpuf_db_path <- eunomiaDir("synpuf-1k")
-cat("SynPUF DuckDB path:", synpuf_db_path, "\n")
+# 4) Define a fixed path for the demo DuckDB instance
+synpuf_db_path <- file.path(data_folder, "synpuf_demo.duckdb")
+
+# Create the demo database only if it does not already exist
+if (!file.exists(synpuf_db_path)) {
+  synpuf_db_path <- eunomiaDir(
+    datasetName = "synpuf-1k",
+    databaseFile = synpuf_db_path
+  )
+}
+
+cat("SynPUF demo DuckDB path:", synpuf_db_path, "\n")

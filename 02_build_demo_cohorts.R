@@ -7,6 +7,10 @@ source("00_setup_synpuf.R")
 # 1) Open DuckDB connection
 con <- DBI::dbConnect(duckdb::duckdb(), synpuf_db_path)
 
+if (!"person" %in% DBI::dbListTables(con)) {
+  stop("Invalid DuckDB instance: OMOP tables not found.")
+}
+
 # 2) Load OMOP tables
 person_tbl <- tbl(con, "person")
 visit_tbl  <- tbl(con, "visit_occurrence")

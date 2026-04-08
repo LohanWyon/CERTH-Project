@@ -10,6 +10,11 @@ con <- DBI::dbConnect(duckdb::duckdb(), synpuf_db_path)
 cat("\n=== Available tables ===\n")
 print(DBI::dbListTables(con))
 
+if (!"cohort" %in% DBI::dbListTables(con)) {
+  DBI::dbDisconnect(con, shutdown = TRUE)
+  stop("Table 'cohort' not found. Run 02_build_demo_cohorts.R first.")
+}
+
 # 2) Get cohort and person tables
 cohort_tbl <- tbl(con, "cohort")
 person_tbl <- tbl(con, "person")
@@ -98,3 +103,9 @@ cat("\nApproximate AUC (age + gender):", as.numeric(auc_val), "\n")
 
 # 10) Clean up
 DBI::dbDisconnect(con, shutdown = TRUE)
+
+# Optional: remove the demo DuckDB instance after the full pipeline
+if (file.exists(synpuf_db_path)) {
+  file.remove(synpuf_db_path)
+  cat("\nSynPUF demo DuckDB instance removed:", synpuf_db_path, "\n")
+}
