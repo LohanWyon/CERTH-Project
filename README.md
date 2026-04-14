@@ -122,11 +122,12 @@ The result should be a valid writable folder path.
 
 3. **Set up the project folder**
 
+```text
 C:/Users/lohan/Documents/PLP-SynPUF/
   ├─ config_plp_synpuf.R
   ├─ plp_synpuf_hosp.R
   └─ README.md
-
+```
 
 4. **Set the working directory in R**
 
