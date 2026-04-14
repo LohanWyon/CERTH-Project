@@ -1,0 +1,359 @@
+"covariateId","covariateName","analysisId","conceptId","valueAsConceptId","collisions","covariateValue"
+19073217301,"drug_exposure any time prior through 0 days relative to index: ampicillin 50 MG/ML Oral Suspension",301,19073217,NA,NA,-8.58000417481519
+312648101,"condition_occurrence any time prior through 0 days relative to index: Benign essential hypertension",101,312648,NA,NA,-8.31562987696428
+81611101,"condition_occurrence any time prior through 0 days relative to index: Diverticular disease of colon",101,81611,NA,NA,-7.52267915627419
+6003,"age group:  30 -  34",3,0,NA,NA,7.25555231718401
+255348101,"condition_occurrence any time prior through 0 days relative to index: Polymyalgia rheumatica",101,255348,NA,NA,-5.85816647760213
+19040182301,"drug_exposure any time prior through 0 days relative to index: potassium chloride 8 MEQ Extended Release Oral Tablet [Slow-K]",301,19040182,NA,NA,5.4553956918106
+136788101,"condition_occurrence any time prior through 0 days relative to index: Spinal stenosis of lumbar region",101,136788,NA,NA,-5.42597335495669
+19079776301,"drug_exposure any time prior through 0 days relative to index: Timolol 5 MG/ML Ophthalmic Solution",301,19079776,NA,NA,5.38464104345027
+19018872301,"drug_exposure any time prior through 0 days relative to index: chlorzoxazone 500 MG Oral Tablet",301,19018872,NA,NA,-4.39053144936995
+40163333301,"drug_exposure any time prior through 0 days relative to index: propranolol hydrochloride 20 MG Oral Tablet",301,40163333,NA,NA,-3.26855821458359
+79172101,"condition_occurrence any time prior through 0 days relative to index: Closed fracture of coronoid process of ulna",101,79172,NA,NA,-3.11279231799473
+201603101,"condition_occurrence any time prior through 0 days relative to index: Disorder of teeth AND/OR supporting structures",101,201603,NA,NA,-3.0983739908219
+1836434301,"drug_exposure any time prior through 0 days relative to index: sulfamethoxazole 800 MG / trimethoprim 160 MG Oral Tablet",301,1836434,NA,NA,-2.72492351502326
+136057101,"condition_occurrence any time prior through 0 days relative to index: Benign neoplasm of skin of trunk",101,136057,NA,NA,-2.59008874930922
+19038548301,"drug_exposure any time prior through 0 days relative to index: polymyxin B 10000 UNT/ML / trimethoprim 1 MG/ML Ophthalmic Solution [Polytrim]",301,19038548,NA,NA,2.46321153490593
+715236301,"drug_exposure any time prior through 0 days relative to index: baclofen 20 MG Oral Tablet",301,715236,NA,NA,-2.24075523835762
+195401101,"condition_occurrence any time prior through 0 days relative to index: Contusion of hip",101,195401,NA,NA,-2.23921113506536
+436665101,"condition_occurrence any time prior through 0 days relative to index: Bipolar disorder",101,436665,NA,NA,-2.20845736083136
+929954301,"drug_exposure any time prior through 0 days relative to index: lansoprazole 15 MG Delayed Release Oral Capsule [Prevacid]",301,929954,NA,NA,-2.15133965239827
+194133101,"condition_occurrence any time prior through 0 days relative to index: Low back pain",101,194133,NA,NA,-2.07811385286975
+374375101,"condition_occurrence any time prior through 0 days relative to index: Impacted cerumen",101,374375,NA,NA,-2.00009041495165
+19018935301,"drug_exposure any time prior through 0 days relative to index: digoxin 0.125 MG Oral Tablet",301,19018935,NA,NA,-1.94593491521129
+19077601301,"drug_exposure any time prior through 0 days relative to index: gentamicin 3 MG/ML Ophthalmic Solution",301,19077601,NA,NA,1.9114840471844
+437912101,"condition_occurrence any time prior through 0 days relative to index: Congenital maxillary hyperplasia",101,437912,NA,NA,-1.7162558381464
+19019273301,"drug_exposure any time prior through 0 days relative to index: naproxen 500 MG Oral Tablet",301,19019273,NA,NA,-1.71025449712551
+19126480301,"drug_exposure any time prior through 0 days relative to index: lanolin 0.155 MG/MG / petrolatum 0.534 MG/MG Topical Ointment [A+D Original]",301,19126480,NA,NA,1.55791156075237
+19003,"age group:  95 -  99",3,0,NA,NA,1.53745791491832
+78607101,"condition_occurrence any time prior through 0 days relative to index: Open wound of multiple sites of one upper limb with complication",101,78607,NA,NA,-1.52764944944484
+40480128101,"condition_occurrence any time prior through 0 days relative to index: Malignant neoplasm of skin of face",101,40480128,NA,NA,-1.38523856382718
+1125392301,"drug_exposure any time prior through 0 days relative to index: acetaminophen 650 MG Rectal Suppository",301,1125392,NA,NA,-1.38321945619906
+5003,"age group:  25 -  29",3,0,NA,NA,1.36881051241496
+133713101,"condition_occurrence any time prior through 0 days relative to index: Malignant melanoma of skin of face",101,133713,NA,NA,-1.36080585959135
+42903287301,"drug_exposure any time prior through 0 days relative to index: meperidine hydrochloride 100 MG/ML Cartridge",301,42903287,NA,NA,-1.31104939091859
+781063301,"drug_exposure any time prior through 0 days relative to index: alprazolam 2 MG Oral Tablet",301,781063,NA,NA,-1.304308054165
+40174450301,"drug_exposure any time prior through 0 days relative to index: smelt allergenic extract 50 MG/ML Injectable Solution",301,40174450,NA,NA,-1.29989477437523
+19027325301,"drug_exposure any time prior through 0 days relative to index: desonide 0.0005 MG/MG Topical Ointment",301,19027325,NA,NA,-1.14741271719678
+72990101,"condition_occurrence any time prior through 0 days relative to index: Localized osteoarthrosis uncertain if primary OR secondary",101,72990,NA,NA,-1.1380028648882
+19076374301,"drug_exposure any time prior through 0 days relative to index: diazepam 5 MG/ML Injectable Solution",301,19076374,NA,NA,-1.08473152383948
+798875301,"drug_exposure any time prior through 0 days relative to index: clonazepam 0.5 MG Oral Tablet",301,798875,NA,NA,-1.06937532969881
+81112101,"condition_occurrence any time prior through 0 days relative to index: Arthralgia of the lower leg",101,81112,NA,NA,-1.04571403539617
+19079683301,"drug_exposure any time prior through 0 days relative to index: stavudine 15 MG Oral Capsule",301,19079683,NA,NA,-1.01860848546133
+19077636301,"drug_exposure any time prior through 0 days relative to index: glipizide 10 MG Oral Tablet",301,19077636,NA,NA,-1.00214856488325
+1178665301,"drug_exposure any time prior through 0 days relative to index: indomethacin 25 MG Oral Capsule",301,1178665,NA,NA,-0.993685806218443
+432867101,"condition_occurrence any time prior through 0 days relative to index: Hyperlipidemia",101,432867,NA,NA,-0.95924002602094
+40163524301,"drug_exposure any time prior through 0 days relative to index: warfarin sodium 2 MG Oral Tablet",301,40163524,NA,NA,-0.95239600201084
+19078140301,"drug_exposure any time prior through 0 days relative to index: hydrochlorothiazide 25 MG / triamterene 37.5 MG Oral Tablet",301,19078140,NA,NA,-0.932406443880041
+1189757301,"drug_exposure any time prior through 0 days relative to index: rofecoxib 25 MG Oral Tablet [Vioxx]",301,1189757,NA,NA,-0.920129656839623
+320128101,"condition_occurrence any time prior through 0 days relative to index: Essential hypertension",101,320128,NA,NA,-0.874760638155606
+8003,"age group:  40 -  44",3,0,NA,NA,0.873132833738289
+40166541301,"drug_exposure any time prior through 0 days relative to index: tamsulosin hydrochloride 0.4 MG Oral Capsule [Flomax]",301,40166541,NA,NA,-0.8460133578172
+40222059301,"drug_exposure any time prior through 0 days relative to index: bupropion hydrochloride 100 MG Extended Release Oral Tablet [Wellbutrin]",301,40222059,NA,NA,-0.826220949728454
+7003,"age group:  35 -  39",3,0,NA,NA,-0.824848447065453
+19122220301,"drug_exposure any time prior through 0 days relative to index: amoxicillin 250 MG Chewable Tablet",301,19122220,NA,NA,-0.805501240594119
+1539407301,"drug_exposure any time prior through 0 days relative to index: simvastatin 40 MG Oral Tablet",301,1539407,NA,NA,-0.780237818664469
+9003,"age group:  45 -  49",3,0,NA,NA,0.687454231491457
+10003,"age group:  50 -  54",3,0,NA,NA,0.654059992908856
+40174945301,"drug_exposure any time prior through 0 days relative to index: levothyroxine sodium 0.1 MG Oral Tablet [Levoxyl]",301,40174945,NA,NA,-0.632471158419346
+12003,"age group:  60 -  64",3,0,NA,NA,0.596140260693362
+14003,"age group:  70 -  74",3,0,NA,NA,0.578912381609589
+19133570301,"drug_exposure any time prior through 0 days relative to index: 24 HR diltiazem hydrochloride 180 MG Extended Release Oral Capsule",301,19133570,NA,NA,-0.558629938902473
+1539411301,"drug_exposure any time prior through 0 days relative to index: simvastatin 20 MG Oral Tablet",301,1539411,NA,NA,-0.515478227649811
+17003,"age group:  85 -  89",3,0,NA,NA,0.486080979165225
+201826101,"condition_occurrence any time prior through 0 days relative to index: Type 2 diabetes mellitus",101,201826,NA,NA,-0.380433153734931
+16003,"age group:  80 -  84",3,0,NA,NA,0.34577702406967
+8507001,"gender = MALE",1,8507,NA,NA,-0.331812859627567
+15003,"age group:  75 -  79",3,0,NA,NA,0.331346574579089
+11003,"age group:  55 -  59",3,0,NA,NA,0.322159928376163
+19077546301,"drug_exposure any time prior through 0 days relative to index: furosemide 20 MG Oral Tablet",301,19077546,NA,NA,-0.316064291037452
+43011809301,"drug_exposure any time prior through 0 days relative to index: heparin sodium, porcine 10 UNT/ML Injectable Solution",301,43011809,NA,NA,-0.306452005797453
+19133622301,"drug_exposure any time prior through 0 days relative to index: diltiazem hydrochloride 60 MG Oral Tablet",301,19133622,NA,NA,-0.227282671536054
+1836433301,"drug_exposure any time prior through 0 days relative to index: sulfamethoxazole 400 MG / trimethoprim 80 MG Oral Tablet",301,1836433,NA,NA,-0.187888470401766
+1002,"age in years",2,0,NA,NA,0.168122967606287
+18003,"age group:  90 -  94",3,0,NA,NA,0.13674554854838
+24134101,"condition_occurrence any time prior through 0 days relative to index: Neck pain",101,24134,NA,NA,-0.0399329794288017
+40174739301,"drug_exposure any time prior through 0 days relative to index: fluvoxamine maleate 50 MG Oral Tablet",301,40174739,NA,NA,-0.0300201270006729
+19008506301,"drug_exposure any time prior through 0 days relative to index: clioquinol 30 MG/ML / hydrocortisone 10 MG/ML Topical Cream",301,19008506,NA,NA,-0.0199776097353116
+40175281301,"drug_exposure any time prior through 0 days relative to index: olsalazine sodium 250 MG Oral Capsule [Dipentum]",301,40175281,NA,NA,-0.000458836177440718
+19018850301,"drug_exposure any time prior through 0 days relative to index: chlorthalidone 50 MG Oral Tablet",301,19018850,NA,NA,-0.000201844660890977
+19019332301,"drug_exposure any time prior through 0 days relative to index: 24 HR nifedipine 60 MG Extended Release Oral Tablet",301,19019332,NA,NA,-0.0000000203355531558244
+40163492301,"drug_exposure any time prior through 0 days relative to index: zolpidem tartrate 10 MG Oral Tablet",301,40163492,NA,NA,-0.00000000000000432647204887967
+40165767301,"drug_exposure any time prior through 0 days relative to index: enalapril maleate 2.5 MG Oral Tablet",301,40165767,NA,NA,-0.00000000000000432647204887967
+40171560301,"drug_exposure any time prior through 0 days relative to index: amlodipine 5 MG / benazepril hydrochloride 20 MG Oral Capsule [Lotrel]",301,40171560,NA,NA,-0.00000000000000432647204887967
+40173612301,"drug_exposure any time prior through 0 days relative to index: alendronic acid 70 MG Oral Tablet",301,40173612,NA,NA,-0.00000000000000432647204887967
+40175400301,"drug_exposure any time prior through 0 days relative to index: pravastatin sodium 40 MG Oral Tablet",301,40175400,NA,NA,-0.00000000000000432647204887967
+40234705301,"drug_exposure any time prior through 0 days relative to index: nystatin 100 UNT/MG / triamcinolone acetonide 0.001 MG/MG Topical Ointment",301,40234705,NA,NA,-0.00000000000000432647204887967
+19023551301,"drug_exposure any time prior through 0 days relative to index: omeprazole 40 MG Delayed Release Oral Capsule",301,19023551,NA,NA,-0.00000000000000432647204887967
+19036520301,"drug_exposure any time prior through 0 days relative to index: nitrofurazone 0.002 MG/MG Topical Ointment [Furacin]",301,19036520,NA,NA,-0.00000000000000432647204887967
+19073187301,"drug_exposure any time prior through 0 days relative to index: amoxicillin 500 MG Oral Capsule",301,19073187,NA,NA,-0.00000000000000432647204887967
+19133768301,"drug_exposure any time prior through 0 days relative to index: acetaminophen 750 MG / hydrocodone bitartrate 7.5 MG Oral Tablet",301,19133768,NA,NA,-0.00000000000000432647204887967
+4222781101,"condition_occurrence any time prior through 0 days relative to index: Inguinal hernia without obstruction AND without gangrene",101,4222781,NA,NA,0
+4242416101,"condition_occurrence any time prior through 0 days relative to index: Cutis laxa",101,4242416,NA,NA,0
+4288310101,"condition_occurrence any time prior through 0 days relative to index: Carotid artery obstruction",101,4288310,NA,NA,0
+4300442101,"condition_occurrence any time prior through 0 days relative to index: Solar erythema",101,4300442,NA,NA,0
+4308509101,"condition_occurrence any time prior through 0 days relative to index: Impaired fasting glycemia",101,4308509,NA,NA,0
+4311499101,"condition_occurrence any time prior through 0 days relative to index: Primary malignant neoplasm of respiratory tract",101,4311499,NA,NA,0
+4318560101,"condition_occurrence any time prior through 0 days relative to index: Chronic mixed headache syndrome",101,4318560,NA,NA,0
+4010963101,"condition_occurrence any time prior through 0 days relative to index: Cramp in lower leg associated with rest",101,4010963,NA,NA,0
+4012368101,"condition_occurrence any time prior through 0 days relative to index: Increased frequency of urination",101,4012368,NA,NA,0
+4018504101,"condition_occurrence any time prior through 0 days relative to index: Sprain of ligament of lumbosacral joint",101,4018504,NA,NA,0
+4019253101,"condition_occurrence any time prior through 0 days relative to index: Thyroid region sprain",101,4019253,NA,NA,0
+4043731101,"condition_occurrence any time prior through 0 days relative to index: Infarction - precerebral",101,4043731,NA,NA,0
+4066371101,"condition_occurrence any time prior through 0 days relative to index: Cellulitis and abscess of lower leg",101,4066371,NA,NA,0
+254761101,"condition_occurrence any time prior through 0 days relative to index: Cough",101,254761,NA,NA,0
+255573101,"condition_occurrence any time prior through 0 days relative to index: Chronic obstructive lung disease",101,255573,NA,NA,0
+255848101,"condition_occurrence any time prior through 0 days relative to index: Pneumonia",101,255848,NA,NA,0
+256448101,"condition_occurrence any time prior through 0 days relative to index: Chronic asthmatic bronchitis",101,256448,NA,NA,0
+257007101,"condition_occurrence any time prior through 0 days relative to index: Allergic rhinitis",101,257007,NA,NA,0
+260123101,"condition_occurrence any time prior through 0 days relative to index: Acute sinusitis",101,260123,NA,NA,0
+312327101,"condition_occurrence any time prior through 0 days relative to index: Acute myocardial infarction",101,312327,NA,NA,0
+312437101,"condition_occurrence any time prior through 0 days relative to index: Dyspnea",101,312437,NA,NA,0
+312922101,"condition_occurrence any time prior through 0 days relative to index: Coronary bypass graft finding",101,312922,NA,NA,0
+312940101,"condition_occurrence any time prior through 0 days relative to index: Acute-on-chronic respiratory failure",101,312940,NA,NA,0
+312998101,"condition_occurrence any time prior through 0 days relative to index: Pain in thoracic spine",101,312998,NA,NA,0
+313209101,"condition_occurrence any time prior through 0 days relative to index: Left bundle branch hemiblock",101,313209,NA,NA,0
+313217101,"condition_occurrence any time prior through 0 days relative to index: Atrial fibrillation",101,313217,NA,NA,0
+313502101,"condition_occurrence any time prior through 0 days relative to index: Benign hypertensive heart disease without congestive heart failure",101,313502,NA,NA,0
+313792101,"condition_occurrence any time prior through 0 days relative to index: Paroxysmal tachycardia",101,313792,NA,NA,0
+313878101,"condition_occurrence any time prior through 0 days relative to index: Respiratory symptom",101,313878,NA,NA,0
+314054101,"condition_occurrence any time prior through 0 days relative to index: Aortic valve disorder",101,314054,NA,NA,0
+314131101,"condition_occurrence any time prior through 0 days relative to index: Degeneration of cervical intervertebral disc",101,314131,NA,NA,0
+314378101,"condition_occurrence any time prior through 0 days relative to index: Hypertensive heart disease with congestive heart failure",101,314378,NA,NA,0
+314963101,"condition_occurrence any time prior through 0 days relative to index: Giant cell arteritis",101,314963,NA,NA,0
+315078101,"condition_occurrence any time prior through 0 days relative to index: Palpitations",101,315078,NA,NA,0
+315286101,"condition_occurrence any time prior through 0 days relative to index: Chronic ischemic heart disease",101,315286,NA,NA,0
+315296101,"condition_occurrence any time prior through 0 days relative to index: Preinfarction syndrome",101,315296,NA,NA,0
+315830101,"condition_occurrence any time prior through 0 days relative to index: Prinzmetal angina",101,315830,NA,NA,0
+316127101,"condition_occurrence any time prior through 0 days relative to index: Vitreous opacities",101,316127,NA,NA,0
+316429101,"condition_occurrence any time prior through 0 days relative to index: Premature beats",101,316429,NA,NA,0
+316995101,"condition_occurrence any time prior through 0 days relative to index: Coronary occlusion",101,316995,NA,NA,0
+316999101,"condition_occurrence any time prior through 0 days relative to index: Conduction disorder of the heart",101,316999,NA,NA,0
+317296101,"condition_occurrence any time prior through 0 days relative to index: Rheumatic disease of pulmonary valve",101,317296,NA,NA,0
+317302101,"condition_occurrence any time prior through 0 days relative to index: Sinus node dysfunction",101,317302,NA,NA,0
+317576101,"condition_occurrence any time prior through 0 days relative to index: Coronary arteriosclerosis",101,317576,NA,NA,0
+318437101,"condition_occurrence any time prior through 0 days relative to index: Malignant secondary hypertension",101,318437,NA,NA,0
+318443101,"condition_occurrence any time prior through 0 days relative to index: Arteriosclerotic vascular disease",101,318443,NA,NA,0
+318448101,"condition_occurrence any time prior through 0 days relative to index: Second degree atrioventricular block",101,318448,NA,NA,0
+318800101,"condition_occurrence any time prior through 0 days relative to index: Gastroesophageal reflux disease",101,318800,NA,NA,0
+319049101,"condition_occurrence any time prior through 0 days relative to index: Acute respiratory failure",101,319049,NA,NA,0
+319835101,"condition_occurrence any time prior through 0 days relative to index: Congestive heart failure",101,319835,NA,NA,0
+319843101,"condition_occurrence any time prior through 0 days relative to index: Mitral valve disorder",101,319843,NA,NA,0
+320420101,"condition_occurrence any time prior through 0 days relative to index: Vitreous degeneration",101,320420,NA,NA,0
+321052101,"condition_occurrence any time prior through 0 days relative to index: Peripheral vascular disease",101,321052,NA,NA,0
+321661101,"condition_occurrence any time prior through 0 days relative to index: Spinal stenosis of thoracic region",101,321661,NA,NA,0
+372629101,"condition_occurrence any time prior through 0 days relative to index: Nonexudative age-related macular degeneration",101,372629,NA,NA,0
+372914101,"condition_occurrence any time prior through 0 days relative to index: Optic atrophy",101,372914,NA,NA,0
+373188101,"condition_occurrence any time prior through 0 days relative to index: Binocular vision suppression",101,373188,NA,NA,0
+373769101,"condition_occurrence any time prior through 0 days relative to index: Nuclear cataract",101,373769,NA,NA,0
+373770101,"condition_occurrence any time prior through 0 days relative to index: Infantile, juvenile and presenile cataracts",101,373770,NA,NA,0
+374009101,"condition_occurrence any time prior through 0 days relative to index: Organic mental disorder",101,374009,NA,NA,0
+374060101,"condition_occurrence any time prior through 0 days relative to index: Acute ill-defined cerebrovascular disease",101,374060,NA,NA,0
+374923101,"condition_occurrence any time prior through 0 days relative to index: Bell's palsy",101,374923,NA,NA,0
+375239101,"condition_occurrence any time prior through 0 days relative to index: Degenerative brain disorder",101,375239,NA,NA,0
+375550101,"condition_occurrence any time prior through 0 days relative to index: Senile corneal changes",101,375550,NA,NA,0
+375557101,"condition_occurrence any time prior through 0 days relative to index: Cerebral embolism",101,375557,NA,NA,0
+375791101,"condition_occurrence any time prior through 0 days relative to index: Uncomplicated senile dementia",101,375791,NA,NA,0
+376125101,"condition_occurrence any time prior through 0 days relative to index: Disorder of eyelid",101,376125,NA,NA,0
+376229101,"condition_occurrence any time prior through 0 days relative to index: Abnormal involuntary movement",101,376229,NA,NA,0
+376415101,"condition_occurrence any time prior through 0 days relative to index: Hypermetropia",101,376415,NA,NA,0
+376423101,"condition_occurrence any time prior through 0 days relative to index: Spastic ectropion",101,376423,NA,NA,0
+376713101,"condition_occurrence any time prior through 0 days relative to index: Cerebral hemorrhage",101,376713,NA,NA,0
+376961101,"condition_occurrence any time prior through 0 days relative to index: Disturbance of consciousness",101,376961,NA,NA,0
+376966101,"condition_occurrence any time prior through 0 days relative to index: Exudative age-related macular degeneration",101,376966,NA,NA,0
+377285101,"condition_occurrence any time prior through 0 days relative to index: Mature cataract",101,377285,NA,NA,0
+377889101,"condition_occurrence any time prior through 0 days relative to index: Hearing loss",101,377889,NA,NA,0
+378253101,"condition_occurrence any time prior through 0 days relative to index: Headache",101,378253,NA,NA,0
+378419101,"condition_occurrence any time prior through 0 days relative to index: Alzheimer's disease",101,378419,NA,NA,0
+378427101,"condition_occurrence any time prior through 0 days relative to index: Tear film insufficiency",101,378427,NA,NA,0
+379811101,"condition_occurrence any time prior through 0 days relative to index: Hypermature cataract",101,379811,NA,NA,0
+380094101,"condition_occurrence any time prior through 0 days relative to index: Carpal tunnel syndrome",101,380094,NA,NA,0
+380110101,"condition_occurrence any time prior through 0 days relative to index: Keratoconus, stable condition",101,380110,NA,NA,0
+380986101,"condition_occurrence any time prior through 0 days relative to index: Senile dementia with delusion",101,380986,NA,NA,0
+381001101,"condition_occurrence any time prior through 0 days relative to index: Subjective visual disturbance",101,381001,NA,NA,0
+381295101,"condition_occurrence any time prior through 0 days relative to index: Senile cataract",101,381295,NA,NA,0
+432295101,"condition_occurrence any time prior through 0 days relative to index: Pernicious anemia",101,432295,NA,NA,0
+432875101,"condition_occurrence any time prior through 0 days relative to index: Anemia due to chronic blood loss",101,432875,NA,NA,0
+432923101,"condition_occurrence any time prior through 0 days relative to index: Subarachnoid hemorrhage",101,432923,NA,NA,0
+22350101,"condition_occurrence any time prior through 0 days relative to index: Edema of larynx",101,22350,NA,NA,0
+22955101,"condition_occurrence any time prior through 0 days relative to index: Perforation of esophagus",101,22955,NA,NA,0
+25297101,"condition_occurrence any time prior through 0 days relative to index: Acute pharyngitis",101,25297,NA,NA,0
+30437101,"condition_occurrence any time prior through 0 days relative to index: Gastro-esophageal reflux disease with esophagitis",101,30437,NA,NA,0
+31609101,"condition_occurrence any time prior through 0 days relative to index: Abscess of salivary gland",101,31609,NA,NA,0
+31967101,"condition_occurrence any time prior through 0 days relative to index: Nausea",101,31967,NA,NA,0
+72993101,"condition_occurrence any time prior through 0 days relative to index: Localized, primary osteoarthritis",101,72993,NA,NA,0
+73553101,"condition_occurrence any time prior through 0 days relative to index: Arthropathy",101,73553,NA,NA,0
+73754101,"condition_occurrence any time prior through 0 days relative to index: Restless legs",101,73754,NA,NA,0
+73842101,"condition_occurrence any time prior through 0 days relative to index: Enthesopathy of elbow region",101,73842,NA,NA,0
+74132101,"condition_occurrence any time prior through 0 days relative to index: Degeneration of lumbosacral intervertebral disc",101,74132,NA,NA,0
+75004101,"condition_occurrence any time prior through 0 days relative to index: Frank hematuria",101,75004,NA,NA,0
+75389101,"condition_occurrence any time prior through 0 days relative to index: Current tear of lateral cartilage AND/OR meniscus of knee",101,75389,NA,NA,0
+75909101,"condition_occurrence any time prior through 0 days relative to index: Disorder of bone",101,75909,NA,NA,0
+76194101,"condition_occurrence any time prior through 0 days relative to index: Osteoarthrosis involving multiple sites but not designated as generalized",101,76194,NA,NA,0
+77234101,"condition_occurrence any time prior through 0 days relative to index: Benign neoplasm of colon",101,77234,NA,NA,0
+77638101,"condition_occurrence any time prior through 0 days relative to index: Displacement of intervertebral disc without myelopathy",101,77638,NA,NA,0
+77639101,"condition_occurrence any time prior through 0 days relative to index: Diffuse cervicobrachial syndrome",101,77639,NA,NA,0
+77646101,"condition_occurrence any time prior through 0 days relative to index: Disorder of bone and articular cartilage",101,77646,NA,NA,0
+77670101,"condition_occurrence any time prior through 0 days relative to index: Chest pain",101,77670,NA,NA,0
+78162101,"condition_occurrence any time prior through 0 days relative to index: Peripheral vertigo",101,78162,NA,NA,0
+78232101,"condition_occurrence any time prior through 0 days relative to index: Shoulder joint pain",101,78232,NA,NA,0
+78234101,"condition_occurrence any time prior through 0 days relative to index: Hand joint pain",101,78234,NA,NA,0
+78505101,"condition_occurrence any time prior through 0 days relative to index: Localized, primary osteoarthritis of the ankle and/or foot",101,78505,NA,NA,0
+79106101,"condition_occurrence any time prior through 0 days relative to index: Arthralgia of the pelvic region and thigh",101,79106,NA,NA,0
+79109101,"condition_occurrence any time prior through 0 days relative to index: Climacteric arthritis",101,79109,NA,NA,0
+79904101,"condition_occurrence any time prior through 0 days relative to index: Localized, secondary osteoarthritis of the hand",101,79904,NA,NA,0
+79905101,"condition_occurrence any time prior through 0 days relative to index: Transient arthropathy of the ankle and/or foot",101,79905,NA,NA,0
+79908101,"condition_occurrence any time prior through 0 days relative to index: Muscle weakness",101,79908,NA,NA,0
+80180101,"condition_occurrence any time prior through 0 days relative to index: Osteoarthritis",101,80180,NA,NA,0
+80813101,"condition_occurrence any time prior through 0 days relative to index: Lumbosacral spondylosis without myelopathy",101,80813,NA,NA,0
+81902101,"condition_occurrence any time prior through 0 days relative to index: Urinary tract infectious disease",101,81902,NA,NA,0
+132579101,"condition_occurrence any time prior through 0 days relative to index: Subacute thyroiditis",101,132579,NA,NA,0
+132706101,"condition_occurrence any time prior through 0 days relative to index: Disorder of nail",101,132706,NA,NA,0
+132797101,"condition_occurrence any time prior through 0 days relative to index: Sepsis",101,132797,NA,NA,0
+132841101,"condition_occurrence any time prior through 0 days relative to index: Malignant lymphoma of lymph nodes of multiple sites",101,132841,NA,NA,0
+133436101,"condition_occurrence any time prior through 0 days relative to index: Thyrotoxic crisis",101,133436,NA,NA,0
+133711101,"condition_occurrence any time prior through 0 days relative to index: Overlapping malignant neoplasm of female breast",101,133711,NA,NA,0
+133974101,"condition_occurrence any time prior through 0 days relative to index: Overlapping malignant neoplasm of skin",101,133974,NA,NA,0
+134438101,"condition_occurrence any time prior through 0 days relative to index: Contact dermatitis",101,134438,NA,NA,0
+134736101,"condition_occurrence any time prior through 0 days relative to index: Backache",101,134736,NA,NA,0
+134898101,"condition_occurrence any time prior through 0 days relative to index: Non-toxic uninodular goiter",101,134898,NA,NA,0
+135215101,"condition_occurrence any time prior through 0 days relative to index: Hashimoto thyroiditis",101,135215,NA,NA,0
+135688101,"condition_occurrence any time prior through 0 days relative to index: Abrasion and/or friction burn of foot and/or toe, infected",101,135688,NA,NA,0
+135777101,"condition_occurrence any time prior through 0 days relative to index: Neoplasm of uncertain behavior of skin",101,135777,NA,NA,0
+135858101,"condition_occurrence any time prior through 0 days relative to index: Disorder of lip",101,135858,NA,NA,0
+136185101,"condition_occurrence any time prior through 0 days relative to index: Abnormal granulation tissue",101,136185,NA,NA,0
+136661101,"condition_occurrence any time prior through 0 days relative to index: Non-toxic nodular goiter",101,136661,NA,NA,0
+137519101,"condition_occurrence any time prior through 0 days relative to index: Thyrotoxicosis from ectopic thyroid nodule with crisis",101,137519,NA,NA,0
+138525101,"condition_occurrence any time prior through 0 days relative to index: Pain in limb",101,138525,NA,NA,0
+138825101,"condition_occurrence any time prior through 0 days relative to index: Actinic keratosis",101,138825,NA,NA,0
+138845101,"condition_occurrence any time prior through 0 days relative to index: Rheumatism",101,138845,NA,NA,0
+139757101,"condition_occurrence any time prior through 0 days relative to index: Malignant melanoma of skin of lower limb",101,139757,NA,NA,0
+139902101,"condition_occurrence any time prior through 0 days relative to index: Allergic urticaria",101,139902,NA,NA,0
+139906101,"condition_occurrence any time prior through 0 days relative to index: Intervertebral disc disorder of cervical region with myelopathy",101,139906,NA,NA,0
+140486101,"condition_occurrence any time prior through 0 days relative to index: Ulcer of calf",101,140486,NA,NA,0
+140490101,"condition_occurrence any time prior through 0 days relative to index: Anhidrosis",101,140490,NA,NA,0
+140648101,"condition_occurrence any time prior through 0 days relative to index: Onychomycosis due to dermatophyte",101,140648,NA,NA,0
+140673101,"condition_occurrence any time prior through 0 days relative to index: Hypothyroidism",101,140673,NA,NA,0
+141104101,"condition_occurrence any time prior through 0 days relative to index: Intervertebral disc disorder of lumbar region with myelopathy",101,141104,NA,NA,0
+141508101,"condition_occurrence any time prior through 0 days relative to index: Dermatophytosis of scalp or beard",101,141508,NA,NA,0
+141932101,"condition_occurrence any time prior through 0 days relative to index: Senile hyperkeratosis",101,141932,NA,NA,0
+192286101,"condition_occurrence any time prior through 0 days relative to index: Intestinal disaccharidase deficiency",101,192286,NA,NA,0
+192359101,"condition_occurrence any time prior through 0 days relative to index: Renal failure syndrome",101,192359,NA,NA,0
+192450101,"condition_occurrence any time prior through 0 days relative to index: Retention of urine",101,192450,NA,NA,0
+192671101,"condition_occurrence any time prior through 0 days relative to index: Gastrointestinal hemorrhage",101,192671,NA,NA,0
+192847101,"condition_occurrence any time prior through 0 days relative to index: Primary malignant neoplasm of isthmus of uterus",101,192847,NA,NA,0
+193518101,"condition_occurrence any time prior through 0 days relative to index: Intestinal obstruction",101,193518,NA,NA,0
+193519101,"condition_occurrence any time prior through 0 days relative to index: Impaired renal function disorder",101,193519,NA,NA,0
+193782101,"condition_occurrence any time prior through 0 days relative to index: End-stage renal disease",101,193782,NA,NA,0
+194081101,"condition_occurrence any time prior through 0 days relative to index: Acute cystitis",101,194081,NA,NA,0
+194286101,"condition_occurrence any time prior through 0 days relative to index: Malignant neoplasm of corpus uteri, excluding isthmus",101,194286,NA,NA,0
+194593101,"condition_occurrence any time prior through 0 days relative to index: Mycosis fungoides of lymph nodes of inguinal region AND/OR lower limb",101,194593,NA,NA,0
+194598101,"condition_occurrence any time prior through 0 days relative to index: Neoplasm of uncertain behavior of placenta",101,194598,NA,NA,0
+194988101,"condition_occurrence any time prior through 0 days relative to index: Bilateral recurrent inguinal hernia with gangrene",101,194988,NA,NA,0
+195856101,"condition_occurrence any time prior through 0 days relative to index: Cholangitis",101,195856,NA,NA,0
+195906101,"condition_occurrence any time prior through 0 days relative to index: Disorder of lumbar spine",101,195906,NA,NA,0
+196156101,"condition_occurrence any time prior through 0 days relative to index: Urethral diverticulum",101,196156,NA,NA,0
+196733101,"condition_occurrence any time prior through 0 days relative to index: Urethral syndrome",101,196733,NA,NA,0
+197032101,"condition_occurrence any time prior through 0 days relative to index: Hyperplasia of prostate",101,197032,NA,NA,0
+197304101,"condition_occurrence any time prior through 0 days relative to index: Ulcer of lower extremity",101,197304,NA,NA,0
+197320101,"condition_occurrence any time prior through 0 days relative to index: Acute renal failure syndrome",101,197320,NA,NA,0
+197327101,"condition_occurrence any time prior through 0 days relative to index: Female urinary-genital tract fistula",101,197327,NA,NA,0
+197806101,"condition_occurrence any time prior through 0 days relative to index: Primary malignant neoplasm of gallbladder",101,197806,NA,NA,0
+198571101,"condition_occurrence any time prior through 0 days relative to index: Cardiogenic shock",101,198571,NA,NA,0
+198797101,"condition_occurrence any time prior through 0 days relative to index: Umbilical hernia with gangrene",101,198797,NA,NA,0
+200219101,"condition_occurrence any time prior through 0 days relative to index: Abdominal pain",101,200219,NA,NA,0
+200445101,"condition_occurrence any time prior through 0 days relative to index: Chronic prostatitis",101,200445,NA,NA,0
+200962101,"condition_occurrence any time prior through 0 days relative to index: Primary malignant neoplasm of prostate",101,200962,NA,NA,0
+200970101,"condition_occurrence any time prior through 0 days relative to index: Carcinoma in situ of prostate",101,200970,NA,NA,0
+201059101,"condition_occurrence any time prior through 0 days relative to index: Hypertrophic gastritis",101,201059,NA,NA,0
+201061101,"condition_occurrence any time prior through 0 days relative to index: Diaphragmatic hernia",101,201061,NA,NA,0
+201072101,"condition_occurrence any time prior through 0 days relative to index: Benign prostatic hypertrophy without outflow obstruction",101,201072,NA,NA,0
+201078101,"condition_occurrence any time prior through 0 days relative to index: Atrophic vaginitis",101,201078,NA,NA,0
+252655101,"condition_occurrence any time prior through 0 days relative to index: Group B streptococcal pneumonia",101,252655,NA,NA,0
+253788101,"condition_occurrence any time prior through 0 days relative to index: Nasal polyp",101,253788,NA,NA,0
+254062101,"condition_occurrence any time prior through 0 days relative to index: Acute chest syndrome",101,254062,NA,NA,0
+433163101,"condition_occurrence any time prior through 0 days relative to index: Deficiency of macronutrients",101,433163,NA,NA,0
+433440101,"condition_occurrence any time prior through 0 days relative to index: Dysthymia",101,433440,NA,NA,0
+433513101,"condition_occurrence any time prior through 0 days relative to index: Acute epiglottitis with obstruction",101,433513,NA,NA,0
+433595101,"condition_occurrence any time prior through 0 days relative to index: Edema",101,433595,NA,NA,0
+434123101,"condition_occurrence any time prior through 0 days relative to index: Primary localized osteoarthrosis of pelvic region",101,434123,NA,NA,0
+434318101,"condition_occurrence any time prior through 0 days relative to index: Paraphrenia",101,434318,NA,NA,0
+434616101,"condition_occurrence any time prior through 0 days relative to index: Hemoglobinuria due to hemolysis from external causes",101,434616,NA,NA,0
+435262101,"condition_occurrence any time prior through 0 days relative to index: Primary open angle glaucoma",101,435262,NA,NA,0
+435517101,"condition_occurrence any time prior through 0 days relative to index: Acidosis",101,435517,NA,NA,0
+435903101,"condition_occurrence any time prior through 0 days relative to index: Juvenile osteochondrosis of foot",101,435903,NA,NA,0
+436073101,"condition_occurrence any time prior through 0 days relative to index: Psychotic disorder",101,436073,NA,NA,0
+436118101,"condition_occurrence any time prior through 0 days relative to index: After-cataract with vision obscured following extraction of cataract",101,436118,NA,NA,0
+436222101,"condition_occurrence any time prior through 0 days relative to index: Altered mental status",101,436222,NA,NA,0
+436470101,"condition_occurrence any time prior through 0 days relative to index: Fat necrosis of breast",101,436470,NA,NA,0
+436670101,"condition_occurrence any time prior through 0 days relative to index: Metabolic disease",101,436670,NA,NA,0
+436972101,"condition_occurrence any time prior through 0 days relative to index: Glaucoma associated with systemic syndromes",101,436972,NA,NA,0
+437246101,"condition_occurrence any time prior through 0 days relative to index: Vitamin B deficiency",101,437246,NA,NA,0
+437247101,"condition_occurrence any time prior through 0 days relative to index: Anemia of chronic disease",101,437247,NA,NA,0
+437264101,"condition_occurrence any time prior through 0 days relative to index: Tobacco dependence syndrome",101,437264,NA,NA,0
+437521101,"condition_occurrence any time prior through 0 days relative to index: Familial hyperchylomicronemia",101,437521,NA,NA,0
+437643101,"condition_occurrence any time prior through 0 days relative to index: Abnormal gait",101,437643,NA,NA,0
+437827101,"condition_occurrence any time prior through 0 days relative to index: Pure hypercholesterolemia",101,437827,NA,NA,0
+437828101,"condition_occurrence any time prior through 0 days relative to index: Disorder of calcium metabolism",101,437828,NA,NA,0
+437851101,"condition_occurrence any time prior through 0 days relative to index: Open angle with borderline intraocular pressure",101,437851,NA,NA,0
+438112101,"condition_occurrence any time prior through 0 days relative to index: Neoplastic disease",101,438112,NA,NA,0
+438398101,"condition_occurrence any time prior through 0 days relative to index: Leukocytosis",101,438398,NA,NA,0
+438750101,"condition_occurrence any time prior through 0 days relative to index: Old total retinal detachment",101,438750,NA,NA,0
+438791101,"condition_occurrence any time prior through 0 days relative to index: Pulmonary congestion and hypostasis",101,438791,NA,NA,0
+439297101,"condition_occurrence any time prior through 0 days relative to index: Nuclear senile cataract",101,439297,NA,NA,0
+439697101,"condition_occurrence any time prior through 0 days relative to index: Hypertensive renal disease with renal failure",101,439697,NA,NA,0
+439777101,"condition_occurrence any time prior through 0 days relative to index: Anemia",101,439777,NA,NA,0
+440155101,"condition_occurrence any time prior through 0 days relative to index: Postartificial menopausal syndrome",101,440155,NA,NA,0
+440358101,"condition_occurrence any time prior through 0 days relative to index: Lipoma (clinical)",101,440358,NA,NA,0
+440360101,"condition_occurrence any time prior through 0 days relative to index: Pure hyperglyceridemia",101,440360,NA,NA,0
+440383101,"condition_occurrence any time prior through 0 days relative to index: Depressive disorder",101,440383,NA,NA,0
+440422101,"condition_occurrence any time prior through 0 days relative to index: Noise-induced hearing loss",101,440422,NA,NA,0
+440431101,"condition_occurrence any time prior through 0 days relative to index: Mycoplasma pneumonia",101,440431,NA,NA,0
+440750101,"condition_occurrence any time prior through 0 days relative to index: Thrombophlebitis of deep veins of upper extremities",101,440750,NA,NA,0
+440979101,"condition_occurrence any time prior through 0 days relative to index: Acquired hemolytic anemia",101,440979,NA,NA,0
+441284101,"condition_occurrence any time prior through 0 days relative to index: Open-angle glaucoma",101,441284,NA,NA,0
+441532101,"condition_occurrence any time prior through 0 days relative to index: Monoclonal paraproteinemia",101,441532,NA,NA,0
+441589101,"condition_occurrence any time prior through 0 days relative to index: Endocarditis",101,441589,NA,NA,0
+441701101,"condition_occurrence any time prior through 0 days relative to index: Sprain of hip",101,441701,NA,NA,0
+441840101,"condition_occurrence any time prior through 0 days relative to index: Clinical finding",101,441840,NA,NA,0
+441846101,"condition_occurrence any time prior through 0 days relative to index: After-cataract not obscuring vision following extraction of cataract",101,441846,NA,NA,0
+441872101,"condition_occurrence any time prior through 0 days relative to index: Supraventricular premature beats",101,441872,NA,NA,0
+442426101,"condition_occurrence any time prior through 0 days relative to index: Thoracic post-laminectomy syndrome",101,442426,NA,NA,0
+442752101,"condition_occurrence any time prior through 0 days relative to index: Muscle pain",101,442752,NA,NA,0
+443211101,"condition_occurrence any time prior through 0 days relative to index: Benign prostatic hypertrophy with outflow obstruction",101,443211,NA,NA,0
+443449101,"condition_occurrence any time prior through 0 days relative to index: Acute laryngitis with obstruction",101,443449,NA,NA,0
+443537101,"condition_occurrence any time prior through 0 days relative to index: Deep venous thrombosis of lower extremity",101,443537,NA,NA,0
+443556101,"condition_occurrence any time prior through 0 days relative to index: Primary focal hyperhidrosis",101,443556,NA,NA,0
+443582101,"condition_occurrence any time prior through 0 days relative to index: Arthropathy of joint of hand",101,443582,NA,NA,0
+443597101,"condition_occurrence any time prior through 0 days relative to index: Chronic kidney disease stage 3",101,443597,NA,NA,0
+443732101,"condition_occurrence any time prior through 0 days relative to index: Disorder due to type 2 diabetes mellitus",101,443732,NA,NA,0
+443740101,"condition_occurrence any time prior through 0 days relative to index: Corneal endothelial dystrophy",101,443740,NA,NA,0
+443776101,"condition_occurrence any time prior through 0 days relative to index: Brachial radiculitis",101,443776,NA,NA,0
+444100101,"condition_occurrence any time prior through 0 days relative to index: Mood disorder",101,444100,NA,NA,0
+444202101,"condition_occurrence any time prior through 0 days relative to index: Abscess",101,444202,NA,NA,0
+4093193101,"condition_occurrence any time prior through 0 days relative to index: Elbow stiff",101,4093193,NA,NA,0
+4110192101,"condition_occurrence any time prior through 0 days relative to index: Cerebral infarction due to thrombosis of cerebral arteries",101,4110192,NA,NA,0
+4112183101,"condition_occurrence any time prior through 0 days relative to index: Esophageal varices with bleeding, associated with another disorder",101,4112183,NA,NA,0
+4116950101,"condition_occurrence any time prior through 0 days relative to index: Tenderness of central region",101,4116950,NA,NA,0
+42872402101,"condition_occurrence any time prior through 0 days relative to index: Coronary arteriosclerosis in native artery",101,42872402,NA,NA,0
+43531054101,"condition_occurrence any time prior through 0 days relative to index: Disorder of pelvis",101,43531054,NA,NA,0
+43020432101,"condition_occurrence any time prior through 0 days relative to index: Atherosclerosis of native arteries of the extremities",101,43020432,NA,NA,0
+40479192101,"condition_occurrence any time prior through 0 days relative to index: Chronic systolic heart failure",101,40479192,NA,NA,0
+40481042101,"condition_occurrence any time prior through 0 days relative to index: Acute diastolic heart failure",101,40481042,NA,NA,0
+40481335101,"condition_occurrence any time prior through 0 days relative to index: Pneumonia due to infection by Streptococcus pyogenes",101,40481335,NA,NA,0
+40482727101,"condition_occurrence any time prior through 0 days relative to index: Combined systolic and diastolic dysfunction",101,40482727,NA,NA,0
+40482801101,"condition_occurrence any time prior through 0 days relative to index: Type II diabetes mellitus uncontrolled",101,40482801,NA,NA,0
+40483107101,"condition_occurrence any time prior through 0 days relative to index: Inflamed seborrheic keratosis",101,40483107,NA,NA,0
+40483262101,"condition_occurrence any time prior through 0 days relative to index: Arthritis of shoulder region joint",101,40483262,NA,NA,0
+40483794101,"condition_occurrence any time prior through 0 days relative to index: Degenerative joint disease of pelvis",101,40483794,NA,NA,0
+40162683301,"drug_exposure any time prior through 0 days relative to index: amitriptyline hydrochloride 100 MG Oral Tablet",301,40162683,NA,NA,0
+40168888301,"drug_exposure any time prior through 0 days relative to index: benztropine mesylate 1 MG Oral Tablet",301,40168888,NA,NA,0
+40174765301,"drug_exposure any time prior through 0 days relative to index: hydralazine hydrochloride 10 MG Oral Tablet",301,40174765,NA,NA,0
+19073834301,"drug_exposure any time prior through 0 days relative to index: bacitracin 0.4 UNT/MG / neomycin 0.005 MG/MG / polymyxin B 5 UNT/MG Ophthalmic Ointment",301,19073834,NA,NA,0
+19113528301,"drug_exposure any time prior through 0 days relative to index: water 1000 MG/ML Injectable Solution",301,19113528,NA,NA,0
+1301125301,"drug_exposure any time prior through 0 days relative to index: epoetin alfa",301,1301125,NA,NA,0
+1308738301,"drug_exposure any time prior through 0 days relative to index: vitamin B12",301,1308738,NA,NA,0
+42708468301,"drug_exposure any time prior through 0 days relative to index: sodium hyaluronate 10 MG/ML Injectable Solution [Hyalgan]",301,42708468,NA,NA,0
+745372301,"drug_exposure any time prior through 0 days relative to index: ergoloid mesylates, USP 1 MG Oral Tablet",301,745372,NA,NA,0
+920340301,"drug_exposure any time prior through 0 days relative to index: nitrofurantoin, macrocrystals 25 MG / nitrofurantoin, monohydrate 75 MG Oral Capsule [Macrobid]",301,920340,NA,NA,0
+1000560301,"drug_exposure any time prior through 0 days relative to index: ondansetron",301,1000560,NA,NA,0
