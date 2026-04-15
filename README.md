@@ -6,7 +6,7 @@ This repository contains R scripts and utilities for working with OMOP Common Da
 - building simple cohorts,
 - experimenting with patient-level prediction (PLP) workflows.
 
-The main branch is intended for the **core project**, while a separate branch (`feature/synpuf-plp-demo`) hosts a self-contained demo based on SynPUF 1k.
+The main branch is intended for the **core project**, while separate branches (`feature/...`) hosts self-contained demo.
 
 ## Project structure (main branch)
 
