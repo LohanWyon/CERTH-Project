@@ -82,7 +82,6 @@ if (nzchar(java_path)) {
 # ---------------------------
 cran_packages <- c(
   "DBI",
-  "duckdb",
   "dplyr",
   "remotes"
 )
@@ -90,6 +89,7 @@ cran_packages <- c(
 ohdsi_repo_packages <- c(
   "CDMConnector",
   "DatabaseConnector",
+  "SqlRender",
   "FeatureExtraction",
   "PatientLevelPrediction",
   "CohortGenerator"
@@ -97,6 +97,11 @@ ohdsi_repo_packages <- c(
 
 github_fallback_packages <- list(
   CirceR = "OHDSI/CirceR"
+)
+
+# Optional DBMS-specific packages
+optional_db_packages <- c(
+  "duckdb"
 )
 
 # ---------------------------
@@ -127,16 +132,29 @@ for (pkg in names(github_fallback_packages)) {
 cat("\n")
 
 # ---------------------------
+# Optional DBMS-specific packages
+# ---------------------------
+cat("==> Optional DBMS-specific packages\n")
+for (pkg in optional_db_packages) {
+  if (is_installed(pkg)) {
+    cat(sprintf("Optional package available: %s\n", pkg))
+  } else {
+    cat(sprintf("Optional package not installed: %s\n", pkg))
+  }
+}
+cat("\n")
+
+# ---------------------------
 # Verify package loading
 # ---------------------------
 cat("==> Verifying package loading\n")
 required_packages <- c(
   "CDMConnector",
   "DatabaseConnector",
+  "SqlRender",
   "PatientLevelPrediction",
   "CohortGenerator",
   "CirceR",
-  "duckdb",
   "DBI",
   "dplyr",
   "FeatureExtraction"
@@ -177,5 +195,8 @@ if (!nzchar(java_path)) {
   cat("\nWARNING: Java is missing from PATH.\n")
   cat("If CirceR fails later, install/configure Java first.\n")
 }
+
+cat("\nNote: some database platforms may require additional DBMS-specific drivers or R packages.\n")
+cat("For example, DuckDB, PostgreSQL, SQL Server, or Oracle may each need different local setup.\n")
 
 cat("\nSetup script finished.\n")

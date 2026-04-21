@@ -1,9 +1,10 @@
-# PLP on SynPUF 1k with external configuration and ATLAS JSON cohorts
+# Generic PLP pipeline with external configuration and ATLAS JSON cohorts
 
-This branch contains a modular Patient-Level Prediction (PLP) example built on top of the OHDSI tool stack.  
+This branch contains a modular Patient-Level Prediction (PLP) example built on top of the OHDSI tool stack.
+
 The goal is to keep the main execution script unchanged while moving database connection settings, cohort definitions, covariate settings, model settings, and runtime parameters into small external configuration files.
 
-The pipeline uses ATLAS-exported cohort definition JSON files as input.  
+The pipeline uses ATLAS-exported cohort definition JSON files as input.
 These JSON cohort definitions are converted to SQL with `CirceR`, generated into a cohort table with `CohortGenerator`, and then used by `PatientLevelPrediction` to extract data and train a prediction model.
 
 ## Overview
@@ -39,15 +40,19 @@ plp_synpuf_project/
 
 ### `run_plp_from_config.R`
 
-This is the main execution script.  
-It should remain unchanged across runs. All study-specific changes should be done in the configuration files or the cohort JSON files.
+This is the main execution script.
+
+It is designed to remain unchanged across runs. All study-specific changes should be done in the configuration files or the cohort JSON files.
+
+The script is DBMS-agnostic at the workflow level: it uses `DatabaseConnector` connection details and does not hard-code a specific backend in the run logic.
 
 ### `setup_plp_environment.R`
 
-This is a manual setup and verification script for the R environment used by this project.  
+This is a manual setup and verification script for the R environment used by this project.
+
 It is intended to be run before the main PLP script if package installation or dependency issues are suspected. It checks the local R setup, verifies that required packages are installed, attempts to install missing packages, and reports whether the environment is ready.
 
-This helper script is especially useful because OHDSI packages such as `CohortGenerator` and `CirceR` may require additional setup beyond standard CRAN packages, and Java may also be required depending on the package and platform.
+This helper script is especially useful because OHDSI packages such as `CohortGenerator`, `CirceR`, `SqlRender`, and `PatientLevelPrediction` may require additional setup beyond standard CRAN packages, and Java may also be required depending on the package and platform.
 
 ### `config/config_connection.R`
 
@@ -55,12 +60,21 @@ Contains database and CDM connection settings, such as:
 
 - `dbms`
 - `server`
+- `user`
+- `password`
+- `port`
+- `pathToDriver`
 - `cdmDatabaseSchema`
 - `cdmDatabaseName`
 - `cdmVersion`
 - `tempEmulationSchema`
 - `cohortDatabaseSchema`
 - `outcomeDatabaseSchema`
+
+The meaning of `server` depends on the DBMS:
+
+- for local DuckDB examples, it can be a local file or an OMOP example directory;
+- for other systems, it can be a host, URL, or connection string depending on the backend expected by `DatabaseConnector`.
 
 ### `config/config_cohorts.R`
 
@@ -77,7 +91,8 @@ Contains cohort-related settings, such as:
 
 ### `config/config_covariates.R`
 
-Contains the `FeatureExtraction::createCovariateSettings()` object used during data extraction.  
+Contains the `FeatureExtraction::createCovariateSettings()` object used during data extraction.
+
 This file controls which covariates are included in the PLP analysis.
 
 ### `config/config_model.R`
@@ -101,7 +116,8 @@ Contains runtime settings such as:
 
 ### `cohorts/target.json` and `cohorts/outcome.json`
 
-These files must contain real ATLAS-exported cohort definition JSON.  
+These files must contain real ATLAS-exported cohort definition JSON.
+
 They are read by the main script and converted into SQL using `CirceR`.
 
 ## Environment setup
@@ -112,14 +128,21 @@ Before running the main script, it is recommended to manually run:
 source("setup_plp_environment.R")
 ```
 
-This setup script helps verify that all required packages and dependencies are available before starting the PLP workflow.  
-This is particularly helpful for OHDSI packages such as `CohortGenerator`, `CirceR`, and `PatientLevelPrediction`, since installation issues can arise from missing repositories, missing system dependencies, or Java configuration problems.
+This setup script helps verify that all required packages and dependencies are available before starting the PLP workflow.
+
+This is particularly helpful for OHDSI packages such as `CohortGenerator`, `CirceR`, `SqlRender`, and `PatientLevelPrediction`, since installation issues can arise from missing repositories, missing system dependencies, or Java configuration problems.
 
 If the setup script completes successfully, you can then run:
 
 ```r
 source("run_plp_from_config.R")
 ```
+
+## Example configuration in this branch
+
+This branch currently includes a default example configuration based on a local Eunomia / SynPUF-like OMOP CDM in DuckDB.
+
+This example is meant for development and validation only. The same pipeline structure can be reused with other OMOP CDM databases by editing `config/config_connection.R` and the cohort configuration files, without modifying the main execution script.
 
 ## Example study design in this branch
 
@@ -136,19 +159,27 @@ The script uses the following R packages:
 
 - `CDMConnector`
 - `DatabaseConnector`
+- `SqlRender`
 - `PatientLevelPrediction`
 - `CohortGenerator`
 - `CirceR`
-- `duckdb`
 - `DBI`
 - `dplyr`
 - `FeatureExtraction`
 
-Some OHDSI packages may require Java to be installed and correctly configured in the R environment. This is explicitly noted in the documentation for `CohortGenerator` and `CirceR`.
+Additional DBMS-specific packages may be required depending on the target platform.
+
+For example:
+
+- `duckdb` for local DuckDB-based testing
+- other drivers or JDBC dependencies for PostgreSQL, SQL Server, Oracle, etc.
+
+Some OHDSI packages may require Java to be installed and correctly configured in the R environment. This is especially relevant for packages such as `CirceR`. The setup script checks for Java and reports its availability.
 
 ## How cohort generation works
 
-`CohortGenerator` expects a cohort definition set that typically includes columns such as `cohortId`, `cohortName`, `json`, and `sql`.  
+`CohortGenerator` expects a cohort definition set that typically includes columns such as `cohortId`, `cohortName`, `json`, and `sql`.
+
 In this project, the SQL is generated dynamically from the ATLAS JSON at runtime using `CirceR`, instead of being stored manually.
 
 The script then:
@@ -193,8 +224,9 @@ The main script should not need any modification as long as the expected config 
 ## Notes
 
 - This branch is designed as a simple and modular example.
-- The current example uses DuckDB and SynPUF 1k-style example data.
-- The same structure can be reused for other OMOP CDM databases by updating the connection and cohort configuration files.
+- The current default example uses a DuckDB-based Eunomia / SynPUF-like OMOP CDM.
+- The run script itself is intended to remain generic and reusable across DBMS backends.
+- Reuse on another OMOP CDM should mainly require config changes rather than script changes.
 
 ## References
 
@@ -204,6 +236,8 @@ The main script should not need any modification as long as the expected config 
 - CohortGenerator package page: <https://CRAN.R-project.org/package=CohortGenerator>
 - CirceR README: <https://cran.r-project.org/web/packages/CirceR/readme/README.html>
 - CirceR GitHub README: <https://github.com/OHDSI/CirceR>
+- SqlRender documentation: <https://ohdsi.github.io/SqlRender/>
+- DatabaseConnector querying vignette: <https://ohdsi.github.io/DatabaseConnector/articles/Querying.html>
 - PatientLevelPrediction quick install guide: <https://ohdsi.github.io/PatientLevelPrediction/articles/PatientLevelPrediction.html>
 - PatientLevelPrediction installation guide: <https://ohdsi.github.io/PatientLevelPrediction/articles/InstallationGuide.html>
 - PatientLevelPrediction package docs: <https://ohdsi.r-universe.dev/PatientLevelPrediction>

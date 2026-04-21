@@ -6,4 +6,4 @@ sampleSizePlp <- 10000
 analysisId <- "SynPUF_duckdb_glm"
 analysisName <- "GLM on SynPUF DuckDB"
 
-outputFolder <- file.path(getwd(), "plp_synpuf_duckdb_output")
+outputFolder <- file.path(getwd(), "results")

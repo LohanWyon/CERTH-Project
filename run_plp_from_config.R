@@ -4,14 +4,11 @@
 # ---------------------------
 # Block 0: packages
 # ---------------------------
-library(CDMConnector)
 library(DatabaseConnector)
+library(SqlRender)
 library(PatientLevelPrediction)
 library(CohortGenerator)
 library(CirceR)
-library(duckdb)
-library(DBI)
-library(dplyr)
 library(FeatureExtraction)
 
 options(scipen = 999)
@@ -34,28 +31,35 @@ if (!dir.exists(outputFolder)) {
 # ---------------------------
 message("==> Creating connectionDetails")
 
-connectionDetails <- DatabaseConnector::createConnectionDetails(
+connectionArgs <- list(
   dbms   = dbms,
   server = server
 )
 
-message("==> Connecting with DBI")
-con <- DBI::dbConnect(duckdb::duckdb(), dbdir = server)
+if (exists("user") && !is.null(user)) {
+  connectionArgs$user <- user
+}
+if (exists("password") && !is.null(password)) {
+  connectionArgs$password <- password
+}
+if (exists("port") && !is.null(port)) {
+  connectionArgs$port <- port
+}
+if (exists("pathToDriver") && !is.null(pathToDriver)) {
+  connectionArgs$pathToDriver <- pathToDriver
+}
 
-message("==> Creating CDM reference object")
-cdm <- CDMConnector::cdmFromCon(
-  con         = con,
-  cdmSchema   = cdmDatabaseSchema,
-  writeSchema = cdmDatabaseSchema,
-  cdmName     = cdmDatabaseName,
-  cdmVersion  = as.character(cdmVersion)
+connectionDetails <- do.call(
+  DatabaseConnector::createConnectionDetails,
+  connectionArgs
 )
 
-nPerson <- DBI::dbGetQuery(
-  con,
-  paste0("SELECT COUNT(*) AS n_person FROM ", cdmDatabaseSchema, ".person")
-)
-message("==> Number of persons in CDM: ", nPerson$n_person[1])
+message("==> Connecting through DatabaseConnector")
+conn <- DatabaseConnector::connect(connectionDetails)
+
+on.exit({
+  try(DatabaseConnector::disconnect(conn), silent = TRUE)
+}, add = TRUE)
 
 # ---------------------------
 # Block 3: create cohorts from ATLAS JSON
@@ -82,7 +86,7 @@ if (!file.exists(outcomeJsonFile)) {
   stop(paste("Outcome cohort JSON file not found:", outcomeJsonFile))
 }
 
-targetJson  <- paste(readLines(targetJsonFile, warn = FALSE),  collapse = "\n")
+targetJson  <- paste(readLines(targetJsonFile, warn = FALSE), collapse = "\n")
 outcomeJson <- paste(readLines(outcomeJsonFile, warn = FALSE), collapse = "\n")
 
 if (nchar(trimws(targetJson)) == 0) {
@@ -128,17 +132,6 @@ invisible(
   )
 )
 
-cohortCounts <- DBI::dbGetQuery(
-  con,
-  paste0(
-    "SELECT cohort_definition_id, COUNT(*) AS n ",
-    "FROM ", cohortDatabaseSchema, ".", cohortTable, " ",
-    "GROUP BY cohort_definition_id"
-  )
-)
-message("==> Cohort counts:")
-print(cohortCounts)
-
 # ---------------------------
 # Block 4: databaseDetails for PLP
 # ---------------------------
@@ -153,7 +146,7 @@ databaseDetails <- PatientLevelPrediction::createDatabaseDetails(
   cohortTable            = cohortTable,
   outcomeDatabaseSchema  = outcomeDatabaseSchema,
   outcomeTable           = outcomeTable,
-  cohortId               = targetCohortId,
+  targetId               = targetCohortId,
   outcomeIds             = outcomeCohortId,
   cdmVersion             = cdmVersion
 )
