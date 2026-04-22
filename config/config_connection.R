@@ -28,7 +28,7 @@ dbms <- "duckdb"
 databaseId <- "synpuf-1k"
 server <- CDMConnector::eunomiaDir(datasetName = databaseId)
 
-# Optional connection parameters for non-DuckDB databases
+# Optional connection parameters for some databases
 user <- NULL
 password <- NULL
 port <- NULL
