@@ -1,6 +1,7 @@
 # run_plp_from_config.R
 # Generic PLP script using external config files and ATLAS JSON cohort definitions
 
+
 # ---------------------------
 # Block 0: packages
 # ---------------------------
@@ -12,6 +13,10 @@ library(CirceR)
 library(FeatureExtraction)
 
 options(scipen = 999)
+
+# Charger les utilitaires de précheck  # <<<
+source("precheck_plp.R")               # <<<
+
 
 # ---------------------------
 # Block 1: load config files
@@ -25,6 +30,7 @@ source("config/config_runtime.R")
 if (!dir.exists(outputFolder)) {
   dir.create(outputFolder, recursive = TRUE)
 }
+
 
 # ---------------------------
 # Block 2: connections
@@ -60,6 +66,7 @@ conn <- DatabaseConnector::connect(connectionDetails)
 on.exit({
   try(DatabaseConnector::disconnect(conn), silent = TRUE)
 }, add = TRUE)
+
 
 # ---------------------------
 # Block 3: create cohorts from ATLAS JSON
@@ -113,11 +120,11 @@ outcomeSql <- CirceR::buildCohortQuery(
 message("==> Creating cohort definition set")
 
 cohortDefinitionSet <- data.frame(
-  cohortId   = c(targetCohortId, outcomeCohortId),
-  cohortName = c(targetCohortName, outcomeCohortName),
-  json       = c(targetJson, outcomeJson),
-  sql        = c(targetSql, outcomeSql),
-  stringsAsFactors = FALSE
+  cohortId          = c(targetCohortId, outcomeCohortId),
+  cohortName        = c(targetCohortName, outcomeCohortName),
+  json              = c(targetJson, outcomeJson),
+  sql               = c(targetSql, outcomeSql),
+  stringsAsFactors  = FALSE
 )
 
 message("==> Generating cohorts")
@@ -131,6 +138,18 @@ invisible(
     cohortDefinitionSet  = cohortDefinitionSet
   )
 )
+
+# ---------------------------
+# Block 3 bis: precheck on generated cohorts   # <<<
+# ---------------------------
+message("==> Running precheck on generated cohorts")    # <<<
+precheckCounts <- run_precheck(                        # <<<
+  connectionDetails      = connectionDetails,          # <<<
+  minTargetSubjects      = 1,                          # peux lire depuis config_runtime.R ensuite  # <<<
+  minOutcomeSubjects     = 1,                          # idem                                      # <<<
+  failOnEmpty            = TRUE                        # <<< 
+)                                                      # <<<
+
 
 # ---------------------------
 # Block 4: databaseDetails for PLP
@@ -153,6 +172,7 @@ databaseDetails <- PatientLevelPrediction::createDatabaseDetails(
 
 message("==> databaseDetails created")
 
+
 # ---------------------------
 # Block 5: get PLP data
 # ---------------------------
@@ -169,6 +189,7 @@ plpData <- PatientLevelPrediction::getPlpData(
 )
 
 message("==> PLP data extracted successfully")
+
 
 # ---------------------------
 # Block 6: run PLP
