@@ -83,7 +83,9 @@ if (nzchar(java_path)) {
 cran_packages <- c(
   "DBI",
   "dplyr",
-  "remotes"
+  "remotes",
+  "DT",
+  "shiny"
 )
 
 ohdsi_repo_packages <- c(
@@ -157,7 +159,9 @@ required_packages <- c(
   "CirceR",
   "DBI",
   "dplyr",
-  "FeatureExtraction"
+  "FeatureExtraction",
+  "DT",
+  "shiny"
 )
 
 load_results <- vapply(required_packages, check_library, logical(1))

@@ -2,7 +2,6 @@
 # Generic precheck utilities for the PLP pipeline
 
 precheck_validate_config <- function() {
-  # Vérif minimale : objets attendus en global env
   required_vars <- c(
     "dbms", "server",
     "cdmDatabaseSchema",
@@ -11,7 +10,10 @@ precheck_validate_config <- function() {
     "targetJsonFile", "outcomeJsonFile"
   )
 
-  missing <- required_vars[!vapply(required_vars, exists, logical(1))]
+  missing <- required_vars[
+    !vapply(required_vars, function(x) exists(x, inherits = TRUE), logical(1))
+  ]
+
   if (length(missing) > 0) {
     stop(
       sprintf(
@@ -21,11 +23,19 @@ precheck_validate_config <- function() {
     )
   }
 
-  if (!file.exists(targetJsonFile)) {
-    stop(sprintf("[PRECHECK] Target cohort JSON not found: %s", targetJsonFile))
+  target_path  <- normalizePath(get("targetJsonFile",  inherits = TRUE),
+                                winslash = "/", mustWork = FALSE)
+  outcome_path <- normalizePath(get("outcomeJsonFile", inherits = TRUE),
+                                winslash = "/", mustWork = FALSE)
+
+  message("[PRECHECK] Target JSON path: ", target_path)
+  message("[PRECHECK] Outcome JSON path: ", outcome_path)
+
+  if (!file.exists(target_path)) {
+    stop(sprintf("[PRECHECK] Target cohort JSON not found: %s", target_path))
   }
-  if (!file.exists(outcomeJsonFile)) {
-    stop(sprintf("[PRECHECK] Outcome cohort JSON not found: %s", outcomeJsonFile))
+  if (!file.exists(outcome_path)) {
+    stop(sprintf("[PRECHECK] Outcome cohort JSON not found: %s", outcome_path))
   }
 
   invisible(TRUE)
@@ -107,21 +117,18 @@ run_precheck <- function(connectionDetails,
                          minTargetSubjects = 1,
                          minOutcomeSubjects = 1,
                          failOnEmpty = TRUE) {
-  # Niveau 1 : validation config + fichiers JSON
   message("[PRECHECK] Level 1: config & JSON files")
   precheck_validate_config()
 
-  # Niveau 1 bis : test de connexion
   precheck_test_connection(connectionDetails)
 
-  # Niveau 2 : comptage des cohortes
   message("[PRECHECK] Level 2: cohort counts in cohort table")
   counts <- precheck_count_cohorts(
-    connectionDetails    = connectionDetails,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable          = cohortTable,
-    targetCohortId       = targetCohortId,
-    outcomeCohortId      = outcomeCohortId
+    connectionDetails     = connectionDetails,
+    cohortDatabaseSchema  = cohortDatabaseSchema,
+    cohortTable           = cohortTable,
+    targetCohortId        = targetCohortId,
+    outcomeCohortId       = outcomeCohortId
   )
 
   print(counts)
