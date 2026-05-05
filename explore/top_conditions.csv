@@ -1,0 +1,21 @@
+condition_concept_id,n,concept_name,concept_class_id,vocabulary_id
+44782446,6,Pressure ulcer of ankle,Clinical Finding,SNOMED
+44782447,22,Pressure ulcer of hip,Clinical Finding,SNOMED
+44782549,35,Disorder of vertebral column,Clinical Finding,SNOMED
+44782718,35,Acute combined systolic and diastolic heart failure,Clinical Finding,SNOMED
+44782719,47,Chronic combined systolic and diastolic heart failure,Clinical Finding,SNOMED
+44782733,43,Acute on chronic combined systolic and diastolic heart failure,Clinical Finding,SNOMED
+44783027,29,Injury of face and neck,Clinical Finding,SNOMED
+44783163,49,Pressure ulcer of lower back,Clinical Finding,SNOMED
+44783165,13,Pressure ulcer of upper back,Clinical Finding,SNOMED
+44783376,8,Monoarthritis,Clinical Finding,SNOMED
+44783618,38,Heritable pulmonary arterial hypertension,Clinical Finding,SNOMED
+44784603,1,Hyphema of iris and ciliary body,Clinical Finding,SNOMED
+45757682,1,Anomaly of jaw size,Clinical Finding,SNOMED
+45763750,62,Idiopathic pulmonary fibrosis,Clinical Finding,SNOMED
+45766714,22,Inflammatory dermatosis,Clinical Finding,SNOMED
+45769152,1,Bartter syndrome,Clinical Finding,SNOMED
+45769438,11,Acute severe exacerbation of asthma,Clinical Finding,SNOMED
+45769441,7,Acute exacerbation of allergic asthma,Clinical Finding,SNOMED
+45769442,12,Acute severe exacerbation of immunoglobin E-mediated allergic asthma,Clinical Finding,SNOMED
+45769443,7,Acute severe exacerbation of intrinsic asthma,Clinical Finding,SNOMED

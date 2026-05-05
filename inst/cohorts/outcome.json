@@ -1,0 +1,65 @@
+{
+  "name": "Outcome - Idiopathic pulmonary arterial hypertension",
+  "expressionType": "SIMPLE_DEFINITION",
+  "cdmVersionRange": ">=5.0.0",
+  "PrimaryCriteria": {
+    "CriteriaList": [
+      {
+        "ConditionOccurrence": {
+          "CodesetId": 1,
+          "First": false
+        }
+      }
+    ],
+    "ObservationWindow": {
+      "PriorDays": 0,
+      "PostDays": 0
+    },
+    "PrimaryCriteriaLimit": {
+      "Type": "ALL"
+    }
+  },
+  "ConceptSets": [
+    {
+      "id": 1,
+      "name": "Idiopathic pulmonary arterial hypertension (45763750)",
+      "expression": {
+        "items": [
+          {
+            "concept": {
+              "CONCEPT_ID": 45763750,
+              "CONCEPT_NAME": "Idiopathic pulmonary arterial hypertension",
+              "STANDARD_CONCEPT": "S",
+              "INVALID_REASON": "V",
+              "CONCEPT_CODE": "some_code",
+              "DOMAIN_ID": "Condition",
+              "VOCABULARY_ID": "SNOMED",
+              "CONCEPT_CLASS_ID": "Clinical Finding"
+            },
+            "isExcluded": false,
+            "includeDescendants": true,
+            "includeMapped": false
+          }
+        ]
+      }
+    }
+  ],
+  "QualifiedLimit": {
+    "Type": "ALL"
+  },
+  "ExpressionLimit": {
+    "Type": "ALL"
+  },
+  "InclusionRules": [],
+  "EndStrategy": {
+    "DateOffset": {
+      "Offset": 0
+    }
+  },
+  "CensoringCriteria": [],
+  "CollapseSettings": {
+    "CollapseType": "ERA",
+    "EraPad": 0
+  },
+  "CensorWindow": {}
+}
