@@ -1,36 +1,47 @@
-# PLE v1 starter (safe version)
+PLE v1 starter (screening & stable)
+This branch contains a stable v1 starter for a classical Population‑Level Estimation (PLE) study in R using the OHDSI/HADES ecosystem, primarily the CohortMethod package.
 
-This repository contains a **safe v1 starter** for a classical **Population-Level Estimation (PLE)** study in R using the OHDSI/HADES ecosystem, mainly the `CohortMethod` package. It is intended for use in **VS Code** and keeps the implementation as close as possible to the standard OHDSI workflow: retrieve CohortMethod data, define the study population, estimate the propensity score, apply PS-based adjustment, fit the outcome model, and export the results.
+It is designed to run in VS Code and to stay as close as possible to the standard OHDSI workflow: retrieve CohortMethod data, define the study population, estimate the propensity score, apply PS‑based adjustment, fit the outcome model, and export a compact summary.
 
-The goal of this version is not to replace OHDSI internals, but to provide a **stable, readable, configurable project skeleton** that can be used as a first working implementation and later extended with additional diagnostics, alternative adjustment strategies, or multiple analyses. It has been updated to work with recent versions of the OHDSI packages (notably `CohortMethod`) that use argument objects such as `createCreatePsArgs()` and similar helpers.
+The goal of this branch is not to replace OHDSI internals, but to provide a safe, readable, configurable project skeleton that:
 
----
+works with recent CohortMethod versions that use *Args helper objects (for example createCreatePsArgs()),
 
-## 1. What this code does
+includes a simple two‑step PS screening on a subsample before fitting the final PS model,
 
-The pipeline implements a standard comparative cohort PLE workflow on OMOP-CDM data:
+uses a conservative PS stratification + Cox outcome model as the default.
 
-1. creates database connection details,
-2. optionally generates cohorts from ATLAS JSON,
-3. builds the `CohortMethod` study object from the OMOP-CDM and cohort table,
-4. creates the study population,
-5. fits a large-scale propensity score model,
-6. applies a configurable PS-based adjustment step,
-7. fits the final outcome model,
-8. exports a compact result summary and optional intermediate RDS objects.
+1. What this code does
+The pipeline implements a standard comparative cohort PLE workflow on OMOP‑CDM data:
 
-The default configuration is intentionally conservative and follows a typical OHDSI single-study setup:
+creates database connection details,
 
-- active-comparator comparative cohort design,
-- large-scale propensity score,
-- PS-based adjustment (matching or stratification, configurable),
-- Cox outcome model.
+optionally generates cohorts from ATLAS JSON definitions,
 
----
+builds the CohortMethod study object from the OMOP‑CDM and cohort table,
 
-## 2. Folder structure
+creates the study population,
 
-```text
+fits a large‑scale propensity score model with an optional screening step on a subsample,
+
+applies a configurable PS‑based adjustment step (matching, stratification, or trimming),
+
+fits the outcome model (Cox by default),
+
+exports a compact result summary and optional intermediate RDS objects.
+
+The default configuration in this branch is deliberately conservative and close to a single‑study OHDSI design:
+
+active‑comparator cohort design,
+
+high‑dimensional propensity score,
+
+PS‑based adjustment (default: stratification),
+
+Cox outcome model on the adjusted population.
+
+2. Folder structure
+text
 ple_v1_safe/
 ├─ config/
 │  ├─ config_connection.R
@@ -46,271 +57,313 @@ ple_v1_safe/
 │  └─ export_results.R
 ├─ run_ple_from_config.R
 └─ results/
-```
+config/ holds only parameters (no logic).
 
-Each file has a single role: configuration files hold parameters only, while the `R/` scripts contain helper functions and the main analysis logic.
+R/ contains the reusable functions and the main OHDSI wrappers.
 
----
+run_ple_from_config.R is the main entry‑point script.
 
-## 3. Required R packages
+3. Required R packages
+This branch depends on the OHDSI stack required for a standard CohortMethod analysis:
 
-Install the OHDSI packages needed for a standard `CohortMethod` analysis:
-
-```r
+r
 install.packages(c("remotes", "jsonlite", "readr"))
+
 remotes::install_github("OHDSI/DatabaseConnector")
 remotes::install_github("OHDSI/SqlRender")
 remotes::install_github("OHDSI/CohortGenerator")
 remotes::install_github("OHDSI/CirceR")
 remotes::install_github("OHDSI/FeatureExtraction")
 remotes::install_github("OHDSI/CohortMethod")
-```
+The code uses the newer *Args objects introduced in recent CohortMethod versions (for example createCreatePsArgs(), createMatchOnPsArgs(), createFitOutcomeModelArgs()) to improve stability across package updates.
 
-Some functions in this starter (PS, matching, outcome model) use the newer “Args” objects (`createCreatePsArgs()`, `createMatchOnPsArgs()`, `createFitOutcomeModelArgs()`) recommended in recent `CohortMethod` documentation.
+Depending on your database platform, you may also need to configure JDBC drivers via DatabaseConnector.
 
-Depending on the database platform, you may also need JDBC/driver configuration through `DatabaseConnector`.
+4. Configuration files
+All configuration lives under config/ and is sourced by run_ple_from_config.R.
 
----
+config/config_connection.R
+Defines DBMS connection settings.
 
-## 4. Configuration files
+Typical fields:
 
-### `config/config_connection.R`
+dbms – "postgresql", "sql server", "oracle", "redshift", "duckdb", etc.
 
-Defines the DBMS connection settings. Edit this first.
+server – server name or connection string.
 
-Fields:
+user, password, port – credentials.
 
-- `dbms`: DBMS type, for example `"postgresql"`, `"sql server"`, `"oracle"`, `"redshift"`.
-- `server`: server name or connection string.
-- `user`, `password`, `port`: credentials.
-- `pathToDriver`: optional JDBC driver path.
-- `oracleTempSchema`: optional Oracle temp schema.
+pathToDriver – optional JDBC driver path.
 
-### `config/config_cohorts.R`
+oracleTempSchema – optional Oracle temp schema.
 
-Defines where the cohorts are stored and which cohort IDs to use.
-
-Fields:
-
-- `cohortDatabaseSchema`: schema containing the cohort table.
-- `cohortTable`: cohort table name.
-- `targetId`: target exposure cohort ID.
-- `comparatorId`: comparator cohort ID.
-- `outcomeIds`: vector of outcome cohort IDs.
-- `primaryOutcomeId`: outcome used in `createStudyPopulation()`.
-- `targetJsonFile`, `comparatorJsonFile`, `outcomeJsonFiles`: optional paths to ATLAS JSON definitions if cohort generation is enabled.
-
-### `config/config_cm_data.R`
-
-Defines the settings used by `getDbCohortMethodData()`.
+config/config_cohorts.R
+Defines where the cohorts live and which IDs to use.
 
 Fields:
 
-- `cdmDatabaseSchema`: OMOP-CDM schema.
-- `oracleTempSchema`: optional Oracle temp schema.
-- `studyStartDate`, `studyEndDate`: optional date restriction.
-- `covariateSettings`: OHDSI covariate settings; defaults to `FeatureExtraction::createDefaultCovariateSettings()`.
+cohortDatabaseSchema – schema containing the cohort table.
 
-### `config/config_study_population.R`
+cohortTable – cohort table name.
 
-Defines the study population restrictions used by `createStudyPopulation()`.
+targetId, comparatorId – exposure cohort IDs.
 
-Important fields:
+outcomeIds – vector of outcome cohort IDs.
 
-- `firstExposureOnly`
-- `washoutPeriod`
-- `removeSubjectsWithPriorOutcome`
-- `priorOutcomeLookback`
-- `riskWindowStart`, `riskWindowEnd`
-- `startAnchor`, `endAnchor`
-- `requireTimeAtRisk`, `minTimeAtRisk`
+primaryOutcomeId – outcome used in createStudyPopulation().
 
-### `config/config_analysis.R`
+targetJsonFile, comparatorJsonFile, outcomeJsonFiles – optional ATLAS JSON paths if cohort generation is enabled.
 
-Defines the analysis strategy.
-
-This v1 uses:
-
-- `CohortMethod::createPrior("laplace", ...)` for regularized PS fitting,
-- a PS model configured through `createCreatePsArgs()` under the hood,
-- a PS-based adjustment step (`matching`, `stratification`, or `trimming`),
-- a Cox outcome model, configured through `createFitOutcomeModelArgs()`.
-
-You can later change:
-
-- `matching` -> `stratification` or `trimming`,
-- the PS prior,
-- the outcome model type.
-
-### `config/config_runtime.R`
-
-Defines runtime behaviour.
+config/config_cm_data.R
+Defines getDbCohortMethodData() settings.
 
 Fields:
 
-- `outputFolder`
-- `createCohorts`
-- `saveIntermediateRds`
-- `verbose`
+cdmDatabaseSchema – OMOP‑CDM schema.
 
----
+oracleTempSchema – optional Oracle temp schema.
 
-## 5. Code files
+studyStartDate, studyEndDate – optional date restriction.
 
-### `R/utils.R`
+covariateSettings – covariate settings (defaults to FeatureExtraction::createDefaultCovariateSettings() if not overridden).
 
-Contains general helper functions:
+config/config_study_population.R
+Defines restrictions used by createStudyPopulation():
 
-- package checks,
-- creation of `connectionDetails`,
-- directory creation,
-- simple logging,
-- small validation helpers.
+Key fields:
 
-This file is intentionally generic and reusable across future PLE or PLP projects.
+firstExposureOnly
 
-### `R/cohort_generation.R`
+washoutPeriod
 
-Contains the optional cohort generation step.
+removeSubjectsWithPriorOutcome
 
-If `runtimeConfig$createCohorts = TRUE`, the code:
+priorOutcomeLookback
 
-- reads ATLAS JSON files,
-- converts them into OHDSI cohort expressions using `CirceR`,
-- builds SQL,
-- creates cohort tables,
-- generates cohorts into the cohort table.
+riskWindowStart, riskWindowEnd
 
-If `createCohorts = FALSE`, the code assumes the cohort table already exists and already contains the requested target, comparator, and outcome cohorts.
+startAnchor, endAnchor
 
-### `R/run_single_cm_analysis.R`
+requireTimeAtRisk, minTimeAtRisk
 
-Contains the main OHDSI analysis steps:
+config/config_analysis.R
+Defines the analysis strategy for PS and outcome model.
 
-- `build_cm_data()` -> calls `getDbCohortMethodData()`.
-- `build_study_population()` -> calls `createStudyPopulation()`.
-- `fit_ps_model()` -> calls `createPs()` using `createCreatePsArgs()`.
-- `apply_adjustment()` -> applies matching, stratification, or trimming using the corresponding `*Args` functions (for example `createMatchOnPsArgs()`).
-- `fit_outcome()` -> calls `fitOutcomeModel()` using `createFitOutcomeModelArgs()`.
+In this branch, it includes:
 
-These are thin wrappers around OHDSI functions. This is intentional: the aim is to reuse existing OHDSI logic rather than reimplementing it.
+psModel – PS model settings (for example maxCohortSizeForFitting, Laplace prior).
 
-### `R/export_results.R`
+psScreening – 2‑step PS screening configuration:
 
-Writes a compact CSV summary and saves intermediate RDS files.
+enabled – enable/disable screening,
 
-This is useful for:
+sampleSize – number of subjects in the screening subsample,
 
-- debugging,
-- comparing runs,
-- checking whether the model completed,
-- later building richer diagnostics or reporting layers.
+topCovariates – number of covariates to keep based on the screening model,
 
-### `run_ple_from_config.R`
+seed – reproducibility.
 
-This is the main runner.
+adjustment – PS‑based adjustment:
+
+method – "matching", "stratification", or "trimming",
+
+caliper, maxRatio, trimFraction – method‑specific parameters.
+
+outcomeModel – outcome model settings:
+
+modelType – "cox" by default,
+
+stratified – whether to fit a stratified Cox by PS strata.
+
+config/config_runtime.R
+Defines runtime behaviour and output.
+
+Typical fields:
+
+outputFolder – where to write CSV and RDS outputs.
+
+createCohorts – TRUE to generate cohorts from JSON, FALSE if cohorts already exist.
+
+saveIntermediateRds – whether to save PS and population objects.
+
+verbose – basic logging.
+
+5. Code files
+R/utils.R
+Generic helpers:
+
+checks for required packages,
+
+helper to create connectionDetails,
+
+safe directory creation,
+
+simple logging and validation helpers.
+
+This file is meant to be reusable across future PLE/PLP projects.
+
+R/cohort_generation.R
+Optional cohort generation step.
+
+If runtimeConfig$createCohorts = TRUE, the code:
+
+reads ATLAS JSON,
+
+converts them to OHDSI cohort expressions via CirceR,
+
+builds SQL via SqlRender,
+
+creates and populates the cohort tables in cohortDatabaseSchema.
+
+If createCohorts = FALSE, the pipeline assumes the cohort table already exists and contains the target, comparator and outcome cohorts.
+
+R/run_single_cm_analysis.R
+Core OHDSI analysis steps, as thin wrappers around CohortMethod:
+
+build_cm_data() – calls getDbCohortMethodData().
+
+build_study_population() – calls createStudyPopulation().
+
+fit_ps_model() –
+
+if psScreening$enabled = TRUE:
+
+fits a screening PS model on a subsample of the population,
+
+ranks covariates by absolute coefficient, keeps the top topCovariates,
+
+refits a final PS model on the full population restricted to those covariates;
+
+otherwise: fits a single PS model as in the standard OHDSI examples.
+
+apply_adjustment() – applies the chosen PS‑based adjustment using createMatchOnPsArgs(), createStratifyByPsArgs(), or createTrimByPsToEquipoiseArgs().
+
+fit_outcome() – fits the outcome model via fitOutcomeModel() using createFitOutcomeModelArgs() (Cox by default).
+
+The intention is to reuse OHDSI logic rather than reimplement it; the wrappers just centralize configuration and provide a place for light customisation (like the screening step).
+
+R/export_results.R
+Handles export and basic robustness:
+
+writes a small ple_summary.csv with the main effect estimate (status, RR/HR, CI, p‑value, sample sizes),
+
+optionally saves ps.rds, population.rds, outcome_model.rds for debugging and diagnostics,
+
+avoids hard failures when the adjusted population is empty or when no outcomes are observed (it logs the situation instead of throwing).
+
+run_ple_from_config.R
+Main runner script.
 
 It:
 
-1. loads required packages,
-2. sources all code files,
-3. sources all config files,
-4. validates a few key settings,
-5. runs the pipeline end to end,
-6. writes results to the output folder.
+loads required packages,
 
-In VS Code, this is the main file to run.
+sources all R function files,
 
----
+sources all configuration files,
 
-## 6. How to use the code
+creates the DB connection details,
 
-### Step 1 — Create the folder structure
+optionally generates cohorts,
 
-Create the project folder and copy each file into the matching location.
+builds cmData,
 
-### Step 2 — Install packages
+builds the study population,
 
-Install the required OHDSI packages listed above.
+fits the PS (with optional screening),
 
-### Step 3 — Edit the configuration files
+applies the PS‑based adjustment,
 
+fits the outcome model,
+
+exports the results to runtimeConfig$outputFolder.
+
+In VS Code, this is the script to run for a full end‑to‑end execution.
+
+6. How to run the pipeline
+Step 1 – Create the project structure
+Clone this branch and ensure your local folder matches the structure above.
+
+Step 2 – Install OHDSI packages
+Install the required packages as described in section 3.
+
+Step 3 – Edit configuration
 At minimum, update:
 
-- `config_connection.R`
-- `config_cohorts.R`
-- `config_cm_data.R`
-- `config_study_population.R`
-- `config_analysis.R`
+config_connection.R – DB connection.
 
-### Step 4 — Decide whether to generate cohorts
+config_cohorts.R – where your target/comparator/outcome cohorts come from.
 
-- If cohorts already exist in the cohort table: set `createCohorts = FALSE`.
-- If you want the pipeline to generate them from ATLAS JSON: set `createCohorts = TRUE` and provide JSON file paths in `config_cohorts.R`.
+config_cm_data.R – CDM schema and covariate settings.
 
-### Step 5 — Run the pipeline
+config_study_population.R – inclusion/exclusion and risk window.
 
-In VS Code:
+config_analysis.R – PS model, PS screening, and outcome model settings.
 
-```r
+Step 4 – Decide whether to generate cohorts
+Set runtimeConfig$createCohorts = FALSE if cohorts already exist.
+
+Set runtimeConfig$createCohorts = TRUE and provide JSON paths if you want this project to create them from ATLAS exports.
+
+Step 5 – Run
+In R / VS Code:
+
+r
 source("run_ple_from_config.R")
-```
+or from a terminal:
 
-or in a terminal:
-
-```bash
+bash
 Rscript run_ple_from_config.R
-```
+7. Output files
+The results/ folder typically contains:
 
----
+ple_summary.csv – compact summary of the effect estimate (status, RR/HR, CI, p, counts).
 
-## 7. Output files
+outcome_model.rds – fitted outcome model object (if the model could be fitted).
 
-The `results/` folder will typically contain:
+ps.rds – propensity score object.
 
-- `ple_summary.csv`: compact effect estimate summary (when an outcome model can be fitted),
-- `outcome_model.rds`: fitted outcome model object (may be absent or empty if no outcomes or no adjusted subjects),
-- `ps.rds`: propensity score object,
-- `population.rds`: adjusted population object.
+population.rds – adjusted population used for the outcome model.
 
-The exact content of the model objects and whether a summary file is produced depends on the installed OHDSI package versions and on whether the design actually yields any outcomes in the adjusted population.
+The exact content depends on the package versions and on whether the design yields a non‑empty adjusted population with observed outcomes.
 
----
+8. Why this branch is “safe”
+Compared to a quick prototype, this branch adds several safeguards:
 
-## 8. Why this is called a “safe” version
+explicit use of createPrior() and *Args helper objects to stay compatible with newer CohortMethod interfaces,
 
-This version includes a few safeguards compared with a rough prototype:
+optional two‑step PS screening to keep PS fitting feasible on larger covariate spaces,
 
-- explicit `CohortMethod::createPrior(...)` usage,
-- explicit passing of `cmDataConfig` into the cohort-generation function,
-- basic validation of key settings,
-- simple logging,
-- safer export code that does not fail if the adjusted population is empty or if no outcomes are observed (for example it logs a message instead of throwing an error).
+basic runtime validation and logging,
 
-These changes make the project easier to run, debug, and adapt without changing the underlying OHDSI logic.
+export code that does not crash when there are no matched/adjusted subjects or no outcomes,
 
----
+a default configuration based on PS stratification + Cox, which is less brittle than strict 1:1 caliper matching in small examples.
 
-## 9. Known limitations
+The objective is to have something that runs reliably, is easy to read, and can be extended with more diagnostics or multiple analyses later.
 
-This is still a **v1 starter**, not a production-ready study package.
+9. Known limitations
+This is a v1 starter, not a full study package:
 
-In particular:
+The code assumes one analysis at a time (single target/comparator/outcome configuration).
 
-- some function arguments may differ slightly across package versions, so the wrappers rely on `*Args` objects to improve robustness,
-- diagnostics are still minimal,
-- negative controls and empirical calibration are not yet implemented,
-- large-scale multi-analysis support is not yet included,
-- on small example datasets (for example Eunomia), some combinations of target/comparator/outcome may yield very few subjects or no outcomes, in which case the pipeline will run but no effect estimate can be computed.
+Diagnostics (PS overlap, covariate balance, etc.) are minimal and should be added for real studies.
 
----
+Negative controls and empirical calibration are not implemented yet.
 
-## 10. Recommended next steps
+Multi‑outcome / multi‑exposure grids are not supported out of the box.
 
-Once the first run works, the next sensible improvements are:
+On small or synthetic datasets, some designs may legitimately produce neutral or inconclusive results (for example RR ≈ 1 with wide CIs).
 
-- add richer diagnostics,
-- support multiple adjustment branches in one run,
-- save cohort counts and attrition summaries,
-- add negative-control analyses,
-- move toward a more structured multi-analysis OHDSI pipeline.
+10. Suggested next steps
+Once the basic run works on your environment, natural evolutions include:
+
+adding PS and covariate balance diagnostics (plots, tables),
+
+supporting multiple adjustment branches in a single run (matching + stratification + trimming),
+
+exporting cohort counts and attrition tables,
+
+adding negative controls and empirical calibration,
+
+moving towards a more generic, multi‑analysis OHDSI study package structure.
