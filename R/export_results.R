@@ -19,7 +19,7 @@ export_results <- function(outputFolder,
     saveRDS(outcomeModel, file.path(outputFolder, "outcome_model.rds"))
   }
 
-  # Infos de base sur la population ajustée
+  # Résumé de la population ajustée
   populationSummary <- data.frame(
     nRows = if (is.null(adjustedPopulation)) 0 else nrow(adjustedPopulation),
     nTreated = if (!is.null(adjustedPopulation) && "treatment" %in% colnames(adjustedPopulation)) {
@@ -34,7 +34,8 @@ export_results <- function(outputFolder,
     }
   )
 
-  readr::write_csv(populationSummary, file.path(outputFolder, "population_summary.csv"))
+  readr::write_csv(populationSummary,
+                   file.path(outputFolder, "population_summary.csv"))
 
   # Cas 1 : pas de modèle outcome exploitable
   if (is.null(outcomeModel)) {
@@ -42,25 +43,42 @@ export_results <- function(outputFolder,
       status = "NO_OUTCOME_MODEL_OBJECT",
       rr = NA_real_,
       ci95Lower = NA_real_,
-      ci95Upper = NA_real_
+      ci95Upper = NA_real_,
+      seLogRr = NA_real_,
+      p = NA_real_
     )
     readr::write_csv(statusDf, file.path(outputFolder, "ple_summary.csv"))
     return(invisible(statusDf))
   }
 
-  # Statut du modèle si disponible
-  modelStatus <- if ("status" %in% names(outcomeModel)) {
+  # Statut du modèle
+  modelStatus <- if ("outcomeModelStatus" %in% names(outcomeModel)) {
+    as.character(outcomeModel$outcomeModelStatus)
+  } else if ("status" %in% names(outcomeModel)) {
     as.character(outcomeModel$status)
   } else {
     NA_character_
   }
 
-  # Extraction robuste des champs
-  rr <- if ("rr" %in% names(outcomeModel) && length(outcomeModel$rr) > 0) outcomeModel$rr else NA_real_
-  ci95Lower <- if ("ci95Lb" %in% names(outcomeModel) && length(outcomeModel$ci95Lb) > 0) outcomeModel$ci95Lb else NA_real_
-  ci95Upper <- if ("ci95Ub" %in% names(outcomeModel) && length(outcomeModel$ci95Ub) > 0) outcomeModel$ci95Ub else NA_real_
-  seLogRr <- if ("seLogRr" %in% names(outcomeModel) && length(outcomeModel$seLogRr) > 0) outcomeModel$seLogRr else NA_real_
-  p <- if ("p" %in% names(outcomeModel) && length(outcomeModel$p) > 0) outcomeModel$p else NA_real_
+  # Extraction des estimations depuis outcomeModelTreatmentEstimate
+  est <- outcomeModel$outcomeModelTreatmentEstimate
+
+  if (!is.null(est) && nrow(est) >= 1) {
+    logRr   <- est$logRr[1]
+    logLb95 <- est$logLb95[1]
+    logUb95 <- est$logUb95[1]
+    seLogRr <- est$seLogRr[1]
+
+    rr        <- exp(logRr)
+    ci95Lower <- exp(logLb95)
+    ci95Upper <- exp(logUb95)
+
+    # p-value bilatérale approximative
+    z <- logRr / seLogRr
+    p <- 2 * (1 - pnorm(abs(z)))
+  } else {
+    rr <- ci95Lower <- ci95Upper <- seLogRr <- p <- NA_real_
+  }
 
   summaryDf <- data.frame(
     status = modelStatus,
@@ -73,7 +91,7 @@ export_results <- function(outputFolder,
 
   readr::write_csv(summaryDf, file.path(outputFolder, "ple_summary.csv"))
 
-  # Petit fichier texte lisible rapidement
+  # Version texte lisible rapidement
   summaryLines <- c(
     paste("Status:", ifelse(is.na(modelStatus), "NA", modelStatus)),
     paste("RR:", ifelse(is.na(rr), "NA", format(rr, digits = 4))),

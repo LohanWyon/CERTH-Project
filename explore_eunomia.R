@@ -6,7 +6,7 @@ library(dplyr)
 library(readr)
 
 # 1) Ouvrir Eunomia (synpuf-1k, cdm v5.3) en DuckDB
-db_path <- CDMConnector::eunomiaDir(datasetName = "synpuf-1k", cdmVersion = "5.3")
+db_path <- CDMConnector::eunomiaDir(datasetName = "synpuf-110k", cdmVersion = "5.3")
 message("Eunomia DuckDB path: ", db_path)
 
 con <- DBI::dbConnect(duckdb::duckdb(), db_path)

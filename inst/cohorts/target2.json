@@ -1,5 +1,5 @@
 {
-  "name": "Target - celecoxib",
+  "name": "Target - acetaminophen 500mg oral",
   "expressionType": "SIMPLE_DEFINITION",
   "cdmVersionRange": ">=5.0.0",
   "PrimaryCriteria": {
@@ -22,19 +22,19 @@
   "ConceptSets": [
     {
       "id": 1,
-      "name": "Celecoxib (1118084)",
+      "name": "Acetaminophen 500mg oral (1125360)",
       "expression": {
         "items": [
           {
             "concept": {
-              "CONCEPT_ID": 1118084,
-              "CONCEPT_NAME": "celecoxib",
+              "CONCEPT_ID": 1125360,
+              "CONCEPT_NAME": "acetaminophen 500 MG Oral Tablet",
               "STANDARD_CONCEPT": "S",
               "INVALID_REASON": "V",
               "CONCEPT_CODE": "some_code",
               "DOMAIN_ID": "Drug",
               "VOCABULARY_ID": "RxNorm",
-              "CONCEPT_CLASS_ID": "Ingredient"
+              "CONCEPT_CLASS_ID": "Clinical Drug"
             },
             "isExcluded": false,
             "includeDescendants": true,
@@ -51,10 +51,10 @@
     "Type": "ALL"
   },
   "InclusionRules": [],
-  "CensoringCriteria": [],
-  "CollapseSettings": {
-    "CollapseType": "ERA",
-    "EraPad": 0
-  },
-  "CensorWindow": {}
+"CensoringCriteria": [],
+"CollapseSettings": {
+  "CollapseType": "ERA",
+  "EraPad": 0
+},
+"CensorWindow": {}
 }

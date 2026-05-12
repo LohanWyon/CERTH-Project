@@ -72,17 +72,147 @@ fit_ps_model <- function(population,
     message("Fitting propensity score model...")
   }
 
-  psArgs <- CohortMethod::createCreatePsArgs(
-    maxCohortSizeForFitting = analysisConfig$psModel$maxCohortSizeForFitting,
+  screeningEnabled <- isTRUE(analysisConfig$psScreening$enabled)
+
+  if (!screeningEnabled) {
+    psArgs <- CohortMethod::createCreatePsArgs(
+      maxCohortSizeForFitting = analysisConfig$psModel$maxCohortSizeForFitting,
+      errorOnHighCorrelation = FALSE,
+      stopOnError = FALSE,
+      prior = analysisConfig$psModel$prior
+    )
+
+    ps <- CohortMethod::createPs(
+      cohortMethodData = cmData,
+      population = population,
+      createPsArgs = psArgs
+    )
+
+    return(ps)
+  }
+
+  sampleSize <- min(
+    analysisConfig$psScreening$sampleSize,
+    nrow(population)
+  )
+
+  set.seed(analysisConfig$psScreening$seed)
+
+  sampleIdx <- sample(seq_len(nrow(population)), size = sampleSize)
+  populationSample <- population[sampleIdx, , drop = FALSE]
+
+  if (isTRUE(runtimeConfig$verbose)) {
+    message("PS screening enabled.")
+    message("Screening sample size: ", nrow(populationSample))
+  }
+
+  psArgsScreen <- CohortMethod::createCreatePsArgs(
+    maxCohortSizeForFitting = sampleSize,
     errorOnHighCorrelation = FALSE,
     stopOnError = FALSE,
     prior = analysisConfig$psModel$prior
   )
 
+  psScreen <- CohortMethod::createPs(
+    cohortMethodData = cmData,
+    population = populationSample,
+    createPsArgs = psArgsScreen
+  )
+
+  if (isTRUE(runtimeConfig$verbose)) {
+    message("Extracting selected covariates from screening PS model...")
+  }
+
+  psModel <- CohortMethod::getPsModel(
+    propensityScore = psScreen,
+    cohortMethodData = cmData
+  )
+
+  if (nrow(psModel) == 0) {
+    warning("PS screening returned no selected covariates. Falling back to full PS model.")
+    psArgs <- CohortMethod::createCreatePsArgs(
+      maxCohortSizeForFitting = analysisConfig$psModel$maxCohortSizeForFitting,
+      errorOnHighCorrelation = FALSE,
+      stopOnError = FALSE,
+      prior = analysisConfig$psModel$prior
+    )
+
+    ps <- CohortMethod::createPs(
+      cohortMethodData = cmData,
+      population = population,
+      createPsArgs = psArgs
+    )
+
+    return(ps)
+  }
+
+  coefCol <- NULL
+  possibleCoefCols <- c("coefficient", "estimate", "value")
+  for (nm in possibleCoefCols) {
+    if (nm %in% colnames(psModel)) {
+      coefCol <- nm
+      break
+    }
+  }
+
+  covIdCol <- NULL
+  possibleCovIdCols <- c("covariateId", "covariate_id")
+  for (nm in possibleCovIdCols) {
+    if (nm %in% colnames(psModel)) {
+      covIdCol <- nm
+      break
+    }
+  }
+
+  if (is.null(coefCol) || is.null(covIdCol)) {
+    stop("Could not identify coefficient/covariate ID columns in getPsModel() output.")
+  }
+
+  psModel$absCoef <- abs(psModel[[coefCol]])
+  psModel <- psModel[order(-psModel$absCoef), , drop = FALSE]
+
+  psModel <- psModel[!is.na(psModel[[covIdCol]]), , drop = FALSE]
+  psModel <- psModel[psModel[[covIdCol]] != 0, , drop = FALSE]
+
+  selectedIds <- unique(head(
+    psModel[[covIdCol]],
+    analysisConfig$psScreening$topCovariates
+  ))
+
+  if (length(selectedIds) == 0) {
+    warning("No covariates selected after screening. Falling back to full PS model.")
+    psArgs <- CohortMethod::createCreatePsArgs(
+      maxCohortSizeForFitting = analysisConfig$psModel$maxCohortSizeForFitting,
+      errorOnHighCorrelation = FALSE,
+      stopOnError = FALSE,
+      prior = analysisConfig$psModel$prior
+    )
+
+    ps <- CohortMethod::createPs(
+      cohortMethodData = cmData,
+      population = population,
+      createPsArgs = psArgs
+    )
+
+    return(ps)
+  }
+
+  if (isTRUE(runtimeConfig$verbose)) {
+    message("Selected ", length(selectedIds), " covariates for final PS model.")
+  }
+
+  psArgsFinal <- CohortMethod::createCreatePsArgs(
+    maxCohortSizeForFitting = analysisConfig$psModel$maxCohortSizeForFitting,
+    errorOnHighCorrelation = FALSE,
+    stopOnError = FALSE,
+    prior = analysisConfig$psModel$prior,
+    includeCovariateIds = selectedIds
+  )
+
   ps <- CohortMethod::createPs(
     cohortMethodData = cmData,
     population = population,
-    createPsArgs = psArgs
+    createPsArgs = psArgsFinal
   )
 
   ps
@@ -149,9 +279,16 @@ fit_outcome <- function(adjustedPopulation,
     message("Fitting outcome model...")
   }
 
+  priorOutcome <- Cyclops::createPrior(
+    priorType = "normal",        # ridge
+    useCrossValidation = FALSE,
+    variance = 2                 # pénalisation modérée
+  )
+
   outcomeArgs <- CohortMethod::createFitOutcomeModelArgs(
     modelType  = analysisConfig$outcomeModel$modelType,
-    stratified = analysisConfig$outcomeModel$stratified
+    stratified = analysisConfig$outcomeModel$stratified,
+    prior      = priorOutcome
   )
 
   outcomeModel <- CohortMethod::fitOutcomeModel(

@@ -1,3 +1,6 @@
+source("setup_java.R")
+setup_java()
+
 library(DatabaseConnector)
 library(SqlRender)
 library(CohortGenerator)

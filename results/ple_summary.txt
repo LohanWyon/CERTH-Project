@@ -1,6 +1,6 @@
-Status: NA
-RR: NA
-95% CI lower: NA
-95% CI upper: NA
-SE(logRR): NA
-p-value: NA
+Status: OK
+RR: 1.002
+95% CI lower: 0.7385
+95% CI upper: 1.333
+SE(logRR): 0.1507
+p-value: 0.9893
