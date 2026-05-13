@@ -1,5 +1,6 @@
 studyPopulationConfig <-
-list(firstExposureOnly = TRUE, washoutPeriod = 183L, removeSubjectsWithPriorOutcome = TRUE, 
-    priorOutcomeLookback = 99999L, riskWindowStart = 1L, riskWindowEnd = 30L, 
-    startAnchor = "cohort start", endAnchor = "cohort start", 
-    removeDuplicateSubjects = "keep first", restrictToCommonPeriod = FALSE)
+list(removeDuplicateSubjects = "keep first", removeSubjectsWithPriorOutcome = TRUE, 
+    priorOutcomeLookback = 99999L, requireTimeAtRisk = TRUE, 
+    minTimeAtRisk = 1, riskWindowStart = 1L, startAnchor = "cohort start", 
+    riskWindowEnd = 30L, endAnchor = "cohort end", restrictToCommonPeriod = FALSE, 
+    firstExposureOnly = TRUE, washoutPeriod = 365L)

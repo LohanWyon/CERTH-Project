@@ -4,8 +4,24 @@ parse_csv_ids <- function(x) {
   as.numeric(x)
 }
 
+parse_csv_strings <- function(x) {
+  x <- trimws(unlist(strsplit(x, ",")))
+  x[nzchar(x)]
+}
+
 null_if_empty <- function(x) {
-  if (is.null(x) || identical(trimws(as.character(x)), "")) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  x_chr <- trimws(as.character(x))
+  if (length(x_chr) == 0 || all(!nzchar(x_chr))) {
+    return(NULL)
+  }
+  x
+}
+
+null_if_na <- function(x) {
+  if (is.null(x) || length(x) == 0 || all(is.na(x))) {
     return(NULL)
   }
   x
@@ -33,7 +49,7 @@ build_config_from_input <- function(input, duckdb_path) {
     comparatorName = "comparator",
     targetJsonFile = input$targetJsonFile,
     comparatorJsonFile = input$comparatorJsonFile,
-    outcomeJsonFiles = trimws(unlist(strsplit(input$outcomeJsonFiles, ",")))
+    outcomeJsonFiles = parse_csv_strings(input$outcomeJsonFiles)
   )
 
   cmDataConfig <- list(
@@ -45,22 +61,28 @@ build_config_from_input <- function(input, duckdb_path) {
   )
 
   studyPopulationConfig <- list(
-    firstExposureOnly = input$firstExposureOnly,
-    washoutPeriod = input$washoutPeriod,
+    removeDuplicateSubjects = input$removeDuplicateSubjects,
     removeSubjectsWithPriorOutcome = input$removeSubjectsWithPriorOutcome,
     priorOutcomeLookback = input$priorOutcomeLookback,
+    requireTimeAtRisk = TRUE,
+    minTimeAtRisk = 1,
     riskWindowStart = input$riskWindowStart,
-    riskWindowEnd = input$riskWindowEnd,
     startAnchor = input$startAnchor,
+    riskWindowEnd = input$riskWindowEnd,
     endAnchor = input$endAnchor,
-    removeDuplicateSubjects = input$removeDuplicateSubjects,
-    restrictToCommonPeriod = input$restrictToCommonPeriod
+    restrictToCommonPeriod = input$restrictToCommonPeriod,
+    firstExposureOnly = input$firstExposureOnly,
+    washoutPeriod = input$washoutPeriod
   )
 
   analysisConfig <- list(
     psModel = list(
-      prior = Cyclops::createPrior("laplace", variance = input$ps_prior),
-      maxCohortSizeForFitting = input$maxCohortSizeForFitting
+      maxCohortSizeForFitting = input$maxCohortSizeForFitting,
+      prior = Cyclops::createPrior(
+        "laplace",
+        exclude = 0,
+        useCrossValidation = FALSE
+      )
     ),
     psScreening = list(
       enabled = input$psScreening_enabled,
@@ -70,9 +92,9 @@ build_config_from_input <- function(input, duckdb_path) {
     ),
     adjustment = list(
       method = input$adjustment_method,
-      caliper = input$caliper,
-      maxRatio = input$maxRatio,
-      trimFraction = input$trimFraction
+      caliper = null_if_na(input$caliper),
+      maxRatio = null_if_na(input$maxRatio),
+      trimFraction = null_if_na(input$trimFraction)
     ),
     outcomeModel = list(
       modelType = input$modelType,

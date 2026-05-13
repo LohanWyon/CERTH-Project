@@ -1,9 +1,8 @@
 analysisConfig <-
-list(psModel = list(prior = structure(list(priorType = "laplace", 
-    variance = 0.01, exclude = NULL, graph = NULL, neighborhood = NULL, 
-    useCrossValidation = FALSE, forceIntercept = FALSE), class = "cyclopsPrior"), 
-    maxCohortSizeForFitting = 250000L), psScreening = list(enabled = TRUE, 
-    sampleSize = 10000L, topCovariates = 200L, seed = 123L), 
-    adjustment = list(method = "stratification", caliper = 0.20000000000000001, 
-        maxRatio = 1L, trimFraction = 0.10000000000000001), outcomeModel = list(
-        modelType = "cox", stratified = TRUE))
+list(psModel = list(maxCohortSizeForFitting = 5000L, prior = structure(list(
+    priorType = "laplace", variance = 1, exclude = 0, graph = NULL, 
+    neighborhood = NULL, useCrossValidation = FALSE, forceIntercept = FALSE), class = "cyclopsPrior")), 
+    psScreening = list(enabled = TRUE, sampleSize = 500L, topCovariates = 5000L, 
+        seed = 123L), adjustment = list(method = "stratification", 
+        caliper = NULL, maxRatio = NULL, trimFraction = NULL), 
+    outcomeModel = list(modelType = "cox", stratified = FALSE))

@@ -1,4 +1,4 @@
 connectionConfig <-
-list(dbms = "duckdb", server = "C:\\Users\\lohan\\AppData\\Local\\Temp\\Rtmp0ovXVx/ple_session_9ef4a4d84c38c97a2c06d1b78ee04d75.duckdb", 
+list(dbms = "duckdb", server = "C:\\Users\\lohan\\AppData\\Local\\Temp\\RtmpyAJPv3/ple_session_b3850651ef4d343c2539208e385815d0.duckdb", 
     user = NULL, password = NULL, port = NULL, pathToDriver = NULL, 
     oracleTempSchema = NULL)
