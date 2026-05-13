@@ -1,7 +1,21 @@
-cmDataConfig <- list(
-  cdmDatabaseSchema = "main",
-  oracleTempSchema = NULL,
-  studyStartDate = "",
-  studyEndDate = "",
-  covariateSettings = FeatureExtraction::createDefaultCovariateSettings()
-)
+cmDataConfig <-
+list(cdmDatabaseSchema = "main", oracleTempSchema = NULL, studyStartDate = "", 
+    studyEndDate = "", covariateSettings = structure(list(temporal = FALSE, 
+        temporalSequence = FALSE, DemographicsGender = TRUE, 
+        DemographicsAgeGroup = TRUE, DemographicsRace = TRUE, 
+        DemographicsEthnicity = TRUE, DemographicsIndexYear = TRUE, 
+        DemographicsIndexMonth = TRUE, ConditionGroupEraLongTerm = TRUE, 
+        ConditionGroupEraShortTerm = TRUE, DrugGroupEraLongTerm = TRUE, 
+        DrugGroupEraShortTerm = TRUE, DrugGroupEraOverlapping = TRUE, 
+        ProcedureOccurrenceLongTerm = TRUE, ProcedureOccurrenceShortTerm = TRUE, 
+        DeviceExposureLongTerm = TRUE, DeviceExposureShortTerm = TRUE, 
+        MeasurementLongTerm = TRUE, MeasurementShortTerm = TRUE, 
+        MeasurementRangeGroupLongTerm = TRUE, MeasurementRangeGroupShortTerm = TRUE, 
+        MeasurementValueAsConceptLongTerm = TRUE, MeasurementValueAsConceptShortTerm = TRUE, 
+        ObservationLongTerm = TRUE, ObservationShortTerm = TRUE, 
+        ObservationValueAsConceptLongTerm = TRUE, ObservationValueAsConceptShortTerm = TRUE, 
+        CharlsonIndex = TRUE, Dcsi = TRUE, Chads2 = TRUE, Chads2Vasc = TRUE, 
+        includedCovariateConceptIds = logical(0), includedCovariateIds = logical(0), 
+        addDescendantsToInclude = FALSE, excludedCovariateConceptIds = logical(0), 
+        addDescendantsToExclude = FALSE, shortTermStartDays = -30L, 
+        mediumTermStartDays = -180L, endDays = 0L, longTermStartDays = -365L), fun = "getDbDefaultCovariateData", class = "covariateSettings"))

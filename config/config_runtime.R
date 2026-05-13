@@ -1,6 +1,3 @@
-runtimeConfig <- list(
-  outputFolder = "results",
-  createCohorts = TRUE,
-  saveIntermediateRds = TRUE,
-  verbose = TRUE
-)
+runtimeConfig <-
+list(outputFolder = "results", createCohorts = TRUE, saveIntermediateRds = TRUE, 
+    verbose = TRUE)
