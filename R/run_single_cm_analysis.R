@@ -1,5 +1,7 @@
 # run_single_cm_analysis.R
 
+library(magrittr)
+
 build_cm_data <- function(connectionDetails,
                           cohortsConfig,
                           cmDataConfig,
@@ -223,7 +225,6 @@ fit_ps_model <- function(population,
 apply_adjustment <- function(ps,
                              analysisConfig,
                              runtimeConfig) {
-
   method <- analysisConfig$adjustment$method
 
   if (isTRUE(runtimeConfig$verbose)) {
@@ -276,15 +277,14 @@ fit_outcome <- function(adjustedPopulation,
                         cmData,
                         analysisConfig,
                         runtimeConfig) {
-
   if (isTRUE(runtimeConfig$verbose)) {
     message("Fitting outcome model...")
   }
 
   priorOutcome <- Cyclops::createPrior(
-    priorType = "normal",        # ridge
+    priorType = "normal", # ridge
     useCrossValidation = FALSE,
-    variance = 2                 # pénalisation modérée
+    variance = 2 # pénalisation modérée
   )
 
   outcomeArgs <- CohortMethod::createFitOutcomeModelArgs(

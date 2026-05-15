@@ -1,0 +1,1 @@
+linters: lintr::linters_with_defaults(object_name_linter = lintr::object_name_linter(styles = c("camelCase", "CamelCase", "symbols")), pipe_consistency_linter = lintr::pipe_consistency_linter(pipe = "%>%"), line_length_linter = lintr::line_length_linter(140L))
