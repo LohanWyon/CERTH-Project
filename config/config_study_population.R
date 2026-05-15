@@ -1,3 +1,5 @@
+# studyPopulationConfig.R
+
 studyPopulationConfig <-
 list(removeDuplicateSubjects = "keep first", removeSubjectsWithPriorOutcome = TRUE, 
     priorOutcomeLookback = 99999L, requireTimeAtRisk = TRUE, 

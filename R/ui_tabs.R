@@ -1,3 +1,5 @@
+# ui_tabs.R
+
 configuration_tab <- function() {
   tabPanel(
     "Configuration",

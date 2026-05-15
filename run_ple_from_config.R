@@ -1,3 +1,5 @@
+# run_ple_from_config.R
+
 source("setup_java.R")
 setup_java()
 
@@ -50,7 +52,7 @@ studyPopulation <- build_study_population(
 
 ps <- fit_ps_model(
   population = studyPopulation,
-  cmData = cmData,
+  cmData = cmData, 
   analysisConfig = analysisConfig,
   runtimeConfig = runtimeConfig
 )

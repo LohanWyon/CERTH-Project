@@ -1,3 +1,5 @@
+# run_single_cm_analysis.R
+
 build_cm_data <- function(connectionDetails,
                           cohortsConfig,
                           cmDataConfig,

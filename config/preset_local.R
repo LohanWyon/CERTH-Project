@@ -1,3 +1,5 @@
+# preset_local.R
+
 appPreset <- list(
   dbms = "duckdb",
   oracleTempSchema = "",

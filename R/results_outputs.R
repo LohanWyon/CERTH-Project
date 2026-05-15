@@ -1,3 +1,5 @@
+# results_outputs.R
+
 register_results_outputs <- function(output, input, session, current_config) {
   output$population_plot <- renderPlotly({
     path <- file.path(current_config()$runtimeConfig$outputFolder, "population_summary.csv")

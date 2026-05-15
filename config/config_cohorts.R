@@ -1,3 +1,5 @@
+# config_cohorts.R
+
 cohortsConfig <-
 list(cohortDatabaseSchema = "main", cohortTable = "cohort", targetId = 1L, 
     comparatorId = 2L, outcomeIds = 3, primaryOutcomeId = 3L, 

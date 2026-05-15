@@ -1,3 +1,5 @@
+# config_analysis.R
+
 analysisConfig <-
 list(psModel = list(maxCohortSizeForFitting = 5000L, prior = structure(list(
     priorType = "laplace", variance = 1, exclude = 0, graph = NULL, 

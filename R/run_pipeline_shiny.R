@@ -1,3 +1,5 @@
+# run_pipeline_shiny.R
+
 run_pipeline_safe <- function() {
   tryCatch(
     {

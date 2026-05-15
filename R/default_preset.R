@@ -1,3 +1,5 @@
+# default_preset.R
+
 defaultPreset <- list(
   dbms = "duckdb",
   oracleTempSchema = "",

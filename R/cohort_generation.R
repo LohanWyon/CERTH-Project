@@ -1,4 +1,4 @@
-#R/cohort_generation.R
+# cohort_generation.R
 
 read_json_text <- function(path) {
   if (is.null(path) || !file.exists(path)) {
