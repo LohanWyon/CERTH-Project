@@ -122,6 +122,10 @@ server <- function(input, output, session) {
     apply_preset(defaultPreset, session)
   })
 
+  observeEvent(input$clear_logs, ignoreInit = TRUE, {
+    log_store("")
+  })
+
   session$onSessionEnded(function() {
     if (!is.null(session$userData$duckdb_path) && file.exists(session$userData$duckdb_path)) {
       try(unlink(session$userData$duckdb_path, force = TRUE), silent = TRUE)
@@ -200,4 +204,4 @@ server <- function(input, output, session) {
   )
 }
 
-shinyApp(ui = ui, server = server) 
+shinyApp(ui = ui, server = server)

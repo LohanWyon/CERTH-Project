@@ -191,7 +191,17 @@ execution_tab <- function() {
         column(
           8,
           card(
-            card_header("Execution logs"),
+            card_header(
+              div(
+                style = "display: flex; justify-content: space-between; align-items: center; width: 100%;",
+                span("Execution logs"),
+                actionButton(
+                  "clear_logs",
+                  "Clear logs",
+                  class = "btn btn-outline-secondary btn-sm"
+                )
+              )
+            ),
             card_body(
               verbatimTextOutput("log_output")
             )

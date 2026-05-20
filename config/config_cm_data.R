@@ -1,5 +1,3 @@
-# config_cm_data.R
-
 cmDataConfig <-
 list(cdmDatabaseSchema = "main", oracleTempSchema = NULL, studyStartDate = "", 
     studyEndDate = "", covariateSettings = structure(list(temporal = FALSE, 

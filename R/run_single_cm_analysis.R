@@ -232,7 +232,6 @@ apply_adjustment <- function(ps,
   }
 
   if (identical(method, "matching")) {
-    # Créer les arguments de matching
     matchArgs <- CohortMethod::createMatchOnPsArgs(
       caliper = analysisConfig$adjustment$caliper,
       maxRatio = analysisConfig$adjustment$maxRatio
@@ -258,14 +257,20 @@ apply_adjustment <- function(ps,
   }
 
   if (identical(method, "trimming")) {
-    trimArgs <- CohortMethod::createTrimByPsToEquipoiseArgs(
-      trimFraction = analysisConfig$adjustment$trimFraction
+    # Valeur par défaut si rien n’est spécifié
+    trimFraction <- analysisConfig$adjustment$trimFraction
+    if (is.null(trimFraction) || is.na(trimFraction)) {
+      trimFraction <- 0.05
+    }
+
+    trimArgs <- CohortMethod::createTrimByPsArgs(
+      trimFraction = trimFraction
     )
 
     return(
-      CohortMethod::trimByPsToEquipoise(
+      CohortMethod::trimByPs(
         population = ps,
-        trimByPsToEquipoiseArgs = trimArgs
+        trimByPsArgs = trimArgs
       )
     )
   }
