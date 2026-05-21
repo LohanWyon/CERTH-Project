@@ -85,6 +85,12 @@ build_config_from_input <- function(input, duckdb_path) {
     forceIntercept = FALSE
   )
 
+  ps_screening_seed <- if (is.null(input$psScreening_seed) || is.na(input$psScreening_seed)) {
+    sample.int(.Machine$integer.max, 1)
+  } else {
+    as.integer(input$psScreening_seed)
+  }
+
   analysisConfig <- list(
     psModel = list(
       maxCohortSizeForFitting = input$maxCohortSizeForFitting,
@@ -94,7 +100,7 @@ build_config_from_input <- function(input, duckdb_path) {
       enabled = input$psScreening_enabled,
       sampleSize = input$psScreening_sampleSize,
       topCovariates = input$psScreening_topCovariates,
-      seed = input$psScreening_seed
+      seed = ps_screening_seed
     ),
     adjustment = list(
       method = input$adjustment_method,
