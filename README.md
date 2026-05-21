@@ -1,6 +1,6 @@
 # PLE Shiny App
 
-This repository contains a Shiny-based interface for running a classical Population-Level Estimation (PLE) study in R with the OHDSI/HADES ecosystem, primarily using the CohortMethod package. The app provides an interactive workflow to configure a study, load a built-in preset, run the analysis, and inspect exported results from a browser-based interface instead of editing configuration files manually. [web:756][web:764]
+This repository contains a Shiny-based interface for running a classical Population-Level Estimation (PLE) study in R with the OHDSI/HADES ecosystem, primarily using the CohortMethod package. The app provides an interactive workflow to configure a study, load a built-in preset, run the analysis, and inspect exported results from a browser-based interface instead of editing configuration files manually.
 
 The current version is designed as a safe and readable starter app for local use and prototyping. It keeps the standard OHDSI comparative cohort workflow, while replacing most direct configuration-file editing with a multi-tab Shiny UI.
 
