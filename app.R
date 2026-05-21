@@ -67,16 +67,23 @@ server <- function(input, output, session) {
     if (!is.null(preset$restrictToCommonPeriod)) updateCheckboxInput(session, "restrictToCommonPeriod", value = preset$restrictToCommonPeriod)
 
     if (!is.null(preset$maxCohortSizeForFitting)) updateNumericInput(session, "maxCohortSizeForFitting", value = preset$maxCohortSizeForFitting)
+
+    if (!is.null(preset$ps_prior_type)) updateSelectInput(session, "ps_prior_type", selected = preset$ps_prior_type)
+    if (!is.null(preset$ps_prior_variance) && !is.na(preset$ps_prior_variance)) updateNumericInput(session, "ps_prior_variance", value = preset$ps_prior_variance)
+    if (!is.null(preset$ps_prior_cv)) updateCheckboxInput(session, "ps_prior_cv", value = preset$ps_prior_cv)
+
     if (!is.null(preset$psScreening_enabled)) updateCheckboxInput(session, "psScreening_enabled", value = preset$psScreening_enabled)
     if (!is.null(preset$psScreening_sampleSize)) updateNumericInput(session, "psScreening_sampleSize", value = preset$psScreening_sampleSize)
     if (!is.null(preset$psScreening_topCovariates)) updateNumericInput(session, "psScreening_topCovariates", value = preset$psScreening_topCovariates)
     if (!is.null(preset$psScreening_seed)) updateNumericInput(session, "psScreening_seed", value = preset$psScreening_seed)
+
     if (!is.null(preset$adjustment_method)) updateSelectInput(session, "adjustment_method", selected = preset$adjustment_method)
     if (!is.null(preset$modelType)) updateSelectInput(session, "modelType", selected = preset$modelType)
     if (!is.null(preset$stratified)) updateCheckboxInput(session, "stratified", value = preset$stratified)
     if (!is.null(preset$caliper) && !is.na(preset$caliper)) updateNumericInput(session, "caliper", value = preset$caliper)
     if (!is.null(preset$maxRatio) && !is.na(preset$maxRatio)) updateNumericInput(session, "maxRatio", value = preset$maxRatio)
     if (!is.null(preset$trimFraction) && !is.na(preset$trimFraction)) updateNumericInput(session, "trimFraction", value = preset$trimFraction)
+
     if (!is.null(preset$outputFolder)) updateTextInput(session, "outputFolder", value = preset$outputFolder)
     if (!is.null(preset$createCohorts)) updateCheckboxInput(session, "createCohorts", value = preset$createCohorts)
     if (!is.null(preset$saveIntermediateRds)) updateCheckboxInput(session, "saveIntermediateRds", value = preset$saveIntermediateRds)

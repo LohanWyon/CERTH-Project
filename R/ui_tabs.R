@@ -116,8 +116,15 @@ configuration_tab <- function() {
               fluidRow(
                 column(
                   6,
-                  numericInput("ps_prior", "PS prior variance (unused for matched config)", value = NA, min = 0),
                   numericInput("maxCohortSizeForFitting", "Max cohort size for fitting", value = NA, min = 100),
+                  selectInput(
+                    "ps_prior_type",
+                    "PS prior type",
+                    choices = c("laplace", "normal"),
+                    selected = "laplace"
+                  ),
+                  numericInput("ps_prior_variance", "PS prior variance", value = 1, min = 0.0001, step = 0.1),
+                  checkboxInput("ps_prior_cv", "Use cross-validation for PS prior", value = FALSE),
                   checkboxInput("psScreening_enabled", "Enable PS screening", value = FALSE),
                   numericInput("psScreening_sampleSize", "PS screening sample size", value = NA, min = 100),
                   numericInput("psScreening_topCovariates", "Top covariates", value = NA, min = 1)

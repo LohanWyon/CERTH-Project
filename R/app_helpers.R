@@ -77,14 +77,18 @@ build_config_from_input <- function(input, duckdb_path) {
     washoutPeriod = input$washoutPeriod
   )
 
+  psPrior <- Cyclops::createPrior(
+    priorType = input$ps_prior_type,
+    variance = input$ps_prior_variance,
+    exclude = 0,
+    useCrossValidation = isTRUE(input$ps_prior_cv),
+    forceIntercept = FALSE
+  )
+
   analysisConfig <- list(
     psModel = list(
       maxCohortSizeForFitting = input$maxCohortSizeForFitting,
-      prior = Cyclops::createPrior(
-        "laplace",
-        exclude = 0,
-        useCrossValidation = FALSE
-      )
+      prior = psPrior
     ),
     psScreening = list(
       enabled = input$psScreening_enabled,
