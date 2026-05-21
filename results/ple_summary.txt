@@ -1,6 +1,6 @@
 Status: OK
-RR: 0.8271
-95% CI lower: 0.4982
-95% CI upper: 1.405
-SE(logRR): 0.2645
-p-value: 0.4731
+RR: 0.3412
+95% CI lower: 0.09452
+95% CI upper: 0.9988
+SE(logRR): 0.6015
+p-value: 0.07384

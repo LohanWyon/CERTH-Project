@@ -2,7 +2,8 @@
 
 configuration_tab <- function() {
   tabPanel(
-    "Configuration",
+    title = "Configuration",
+    value = "configuration",
     fluidPage(
       br(),
       fluidRow(
@@ -176,7 +177,8 @@ configuration_tab <- function() {
 
 execution_tab <- function() {
   tabPanel(
-    "Execution",
+    title = "Execution",
+    value = "execution",
     fluidPage(
       br(),
       fluidRow(
@@ -221,7 +223,8 @@ execution_tab <- function() {
 
 results_tab <- function() {
   tabPanel(
-    "Results",
+    title = "Results",
+    value = "results",
     fluidPage(
       br(),
       tabsetPanel(

@@ -15,6 +15,7 @@ source("R/results_outputs.R")
 
 ui <- navbarPage(
   title = "PLE Shiny App",
+  id = "main_nav",
   theme = bs_theme(version = 5, bootswatch = "flatly"),
   configuration_tab(),
   execution_tab(),
