@@ -240,6 +240,15 @@ results_tab <- function() {
           tableOutput("population_table")
         ),
         tabPanel(
+          "Baseline",
+          br(),
+          h4("Age distribution"),
+          tableOutput("age_table"),
+          br(),
+          h4("Gender distribution"),
+          tableOutput("gender_table")
+        ),
+        tabPanel(
           "Files",
           br(),
           uiOutput("files_ui")

@@ -1,6 +1,7 @@
 # results_outputs.R
 
 register_results_outputs <- function(output, input, session, current_config) {
+
   output$population_plot <- renderPlotly({
     path <- file.path(current_config()$runtimeConfig$outputFolder, "population_summary.csv")
 
@@ -21,7 +22,8 @@ register_results_outputs <- function(output, input, session, current_config) {
 
     df <- readr::read_csv(path, show_col_types = FALSE)
 
-    if (nrow(df) < 1 || !all(c("nTreated", "nComparator") %in% names(df))) {
+    needed <- c("nTreated", "nComparator", "targetName", "comparatorName")
+    if (nrow(df) < 1 || !all(needed %in% names(df))) {
       return(plotly::plot_ly() %>%
         plotly::layout(
           title = "Population summary file is empty or malformed",
@@ -29,15 +31,17 @@ register_results_outputs <- function(output, input, session, current_config) {
           yaxis = list(visible = FALSE),
           annotations = list(
             list(
-              text = "Expected columns: nTreated, nComparator",
+              text = "Expected columns: targetName, comparatorName, nTreated, nComparator",
               x = 0.5, y = 0.5, showarrow = FALSE
             )
           )
         ))
     }
 
+    labels <- c(df$targetName[1], df$comparatorName[1])
+
     plotly::plot_ly(
-      x = c("Treated", "Comparator"),
+      x = labels,
       y = c(df$nTreated[1], df$nComparator[1]),
       type = "bar"
     ) %>%
@@ -112,6 +116,24 @@ register_results_outputs <- function(output, input, session, current_config) {
 
   output$population_table <- renderTable({
     path <- file.path(current_config()$runtimeConfig$outputFolder, "population_summary.csv")
+    if (file.exists(path)) {
+      readr::read_csv(path, show_col_types = FALSE)
+    }
+  })
+
+  # Nouvelle table: âge par traitement
+  output$age_table <- renderTable({
+    path <- file.path(current_config()$runtimeConfig$outputFolder,
+                      "age_summary_by_treatment.csv")
+    if (file.exists(path)) {
+      readr::read_csv(path, show_col_types = FALSE)
+    }
+  })
+
+  # Nouvelle table: genre par traitement
+  output$gender_table <- renderTable({
+    path <- file.path(current_config()$runtimeConfig$outputFolder,
+                      "gender_summary_by_treatment.csv")
     if (file.exists(path)) {
       readr::read_csv(path, show_col_types = FALSE)
     }

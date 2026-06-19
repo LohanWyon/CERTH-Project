@@ -34,6 +34,19 @@ build_cm_data <- function(connectionDetails,
     getDbCohortMethodDataArgs = getDbArgs
   )
 
+  if (isTRUE(runtimeConfig$saveIntermediateRds)) {
+    if (!dir.exists(runtimeConfig$outputFolder)) {
+      dir.create(runtimeConfig$outputFolder, recursive = TRUE, showWarnings = FALSE)
+    }
+
+    saveRDS(cmData, file.path(runtimeConfig$outputFolder, "cm_data.rds"))
+
+    if (isTRUE(runtimeConfig$verbose)) {
+      message("Saved CohortMethod data to: ",
+              file.path(runtimeConfig$outputFolder, "cm_data.rds"))
+    }
+  }
+
   cmData
 }
 
@@ -78,6 +91,7 @@ fit_ps_model <- function(population,
 
   screeningEnabled <- isTRUE(analysisConfig$psScreening$enabled)
 
+  # Cas sans screening : PS sur la population complète
   if (!screeningEnabled) {
     psArgs <- CohortMethod::createCreatePsArgs(
       maxCohortSizeForFitting = analysisConfig$psModel$maxCohortSizeForFitting,
@@ -95,6 +109,7 @@ fit_ps_model <- function(population,
     return(ps)
   }
 
+  # Cas avec screening : sous-échantillon + sélection des covariables
   sampleSize <- min(
     analysisConfig$psScreening$sampleSize,
     nrow(population)
@@ -257,7 +272,6 @@ apply_adjustment <- function(ps,
   }
 
   if (identical(method, "trimming")) {
-    # Valeur par défaut si rien n’est spécifié
     trimFraction <- analysisConfig$adjustment$trimFraction
     if (is.null(trimFraction) || is.na(trimFraction)) {
       trimFraction <- 0.05
@@ -287,9 +301,9 @@ fit_outcome <- function(adjustedPopulation,
   }
 
   priorOutcome <- Cyclops::createPrior(
-    priorType = "normal", # ridge
+    priorType = "normal",
     useCrossValidation = FALSE,
-    variance = 2 # pénalisation modérée
+    variance = 2
   )
 
   outcomeArgs <- CohortMethod::createFitOutcomeModelArgs(

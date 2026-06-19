@@ -1,5 +1,7 @@
 # export_results.R
 
+`%||%` <- function(a, b) if (is.null(a) || is.na(a)) b else a
+
 export_results <- function(outputFolder,
                            outcomeModel,
                            ps,
@@ -21,8 +23,10 @@ export_results <- function(outputFolder,
     saveRDS(outcomeModel, file.path(outputFolder, "outcome_model.rds"))
   }
 
-  # Résumé de la population ajustée
+  # Résumé de la population ajustée (avec noms de cohortes)
   populationSummary <- data.frame(
+    targetName     = runtimeConfig$targetName %||% "target",
+    comparatorName = runtimeConfig$comparatorName %||% "comparator",
     nRows = if (is.null(adjustedPopulation)) 0 else nrow(adjustedPopulation),
     nTreated = if (!is.null(adjustedPopulation) && "treatment" %in% colnames(adjustedPopulation)) {
       sum(adjustedPopulation$treatment == 1, na.rm = TRUE)
@@ -36,8 +40,42 @@ export_results <- function(outputFolder,
     }
   )
 
-  readr::write_csv(populationSummary,
-                   file.path(outputFolder, "population_summary.csv"))
+  readr::write_csv(
+    populationSummary,
+    file.path(outputFolder, "population_summary.csv")
+  )
+
+  # Résumés âge / genre par traitement si colonnes disponibles
+  if (!is.null(adjustedPopulation)) {
+
+    # Âge par traitement
+    if (all(c("age", "treatment") %in% names(adjustedPopulation))) {
+      ageSummary <- adjustedPopulation |>
+        dplyr::group_by(treatment) |>
+        dplyr::summarise(
+          n = dplyr::n(),
+          meanAge = mean(age, na.rm = TRUE),
+          sdAge   = stats::sd(age, na.rm = TRUE),
+          minAge  = min(age, na.rm = TRUE),
+          maxAge  = max(age, na.rm = TRUE),
+          .groups = "drop"
+        )
+      readr::write_csv(
+        ageSummary,
+        file.path(outputFolder, "age_summary_by_treatment.csv")
+      )
+    }
+
+    # Genre par traitement
+    if (all(c("gender", "treatment") %in% names(adjustedPopulation))) {
+      genderSummary <- adjustedPopulation |>
+        dplyr::count(treatment, gender, name = "n")
+      readr::write_csv(
+        genderSummary,
+        file.path(outputFolder, "gender_summary_by_treatment.csv")
+      )
+    }
+  }
 
   # Cas 1 : pas de modèle outcome exploitable
   if (is.null(outcomeModel)) {
@@ -77,7 +115,7 @@ export_results <- function(outputFolder,
 
     # p-value bilatérale approximative
     z <- logRr / seLogRr
-    p <- 2 * (1 - pnorm(abs(z)))
+    p <- 2 * (1 - stats::pnorm(abs(z)))
   } else {
     rr <- ci95Lower <- ci95Upper <- seLogRr <- p <- NA_real_
   }
