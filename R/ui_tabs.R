@@ -1,0 +1,336 @@
+# R/ui_tabs.R
+
+cohort_json_selector_ui <- function(prefix, label) {
+  tagList(
+    selectInput(
+      inputId = paste0(prefix, "_json_choice"),
+      label = paste0(label, " JSON definition"),
+      choices = c(
+        "Select an existing cohort JSON" = "",
+        "Import a new cohort JSON" = "__new__"
+      ),
+      selected = ""
+    ),
+    conditionalPanel(
+      condition = sprintf("input['%s'] === '__new__'", paste0(prefix, "_json_choice")),
+      textInput(
+        inputId = paste0(prefix, "_json_name"),
+        label = paste0(label, " JSON file name"),
+        value = ""
+      ),
+      textAreaInput(
+        inputId = paste0(prefix, "_json_text"),
+        label = paste0(label, " ATLAS JSON"),
+        value = "",
+        rows = 12,
+        resize = "vertical",
+        placeholder = "Paste the exported ATLAS JSON here"
+      ),
+      actionButton(
+        inputId = paste0(prefix, "_save_json"),
+        label = paste0("Save ", label, " JSON"),
+        class = "btn-secondary"
+      ),
+      br(), br()
+    ),
+    helpText("Cohort IDs are assigned automatically by the application.")
+  )
+}
+
+
+configuration_tab <- function() {
+  tabPanel(
+    title = "Configuration",
+    value = "configuration",
+    fluidPage(
+      br(),
+
+      card(
+        card_header("Database connection"),
+        card_body(
+          fluidRow(
+            column(
+              6,
+              checkboxInput(
+                "use_demo_connection",
+                "Use demo Eunomia connection",
+                value = TRUE
+              ),
+              conditionalPanel(
+                condition = "!input.use_demo_connection",
+                selectInput(
+                  "dbms",
+                  "Database platform",
+                  choices = c("postgresql", "sql server", "oracle", "redshift", "duckdb"),
+                  selected = "postgresql"
+                ),
+                textInput("server", "Server", value = ""),
+                textInput("port", "Port", value = ""),
+                textInput("user", "Username", value = ""),
+                passwordInput("password", "Password", value = ""),
+                textInput("oracle_temp_schema", "Oracle temp schema", value = "")
+              ),
+              helpText("Demo mode uses Eunomia with automatic technical defaults.")
+            ),
+            column(
+              6,
+              h5("Current connection status"),
+              verbatimTextOutput("connection_status"),
+              br(),
+              h5("Connection details"),
+              verbatimTextOutput("source_db_path"),
+              verbatimTextOutput("connection_details_text")
+            )
+          )
+        )
+      ),
+
+      br(),
+
+      card(
+        card_header("Cohort definitions"),
+        card_body(
+          fluidRow(
+            column(
+              6,
+              textInput(
+                "cohort_json_folder",
+                "Cohort JSON folder",
+                value = "cohorts_json"
+              ),
+              checkboxInput(
+                "generate_cohorts_from_json",
+                "Generate cohorts from stored / imported ATLAS JSON definitions",
+                value = TRUE
+              ),
+              helpText("A single shared folder is used for target, comparator, and outcome JSON files.")
+            ),
+            column(
+              6,
+              textInput(
+                "output_folder",
+                "Output folder",
+                value = ""
+              ),
+              helpText("Leave empty to use the default analysis output folder.")
+            )
+          ),
+
+          br(),
+          tags$hr(),
+          br(),
+
+          fluidRow(
+            column(
+              4,
+              cohort_json_selector_ui("target", "Target")
+            ),
+            column(
+              4,
+              cohort_json_selector_ui("comparator", "Comparator")
+            ),
+            column(
+              4,
+              cohort_json_selector_ui("outcome", "Primary outcome")
+            )
+          ),
+
+          br(),
+
+          textInput(
+            "outcome_cohort_ids",
+            "Additional outcome cohort IDs (comma-separated, optional)",
+            value = ""
+          ),
+          helpText("Optional. The primary analysis uses the primary outcome cohort above.")
+        )
+      ),
+
+      br(),
+
+      card(
+        card_header("Protocol options"),
+        card_body(
+          fluidRow(
+            column(
+              6,
+              textInput(
+                "study_start_date",
+                "Study start date (optional, YYYY-MM-DD)",
+                value = ""
+              ),
+              textInput(
+                "study_end_date",
+                "Study end date (optional, YYYY-MM-DD)",
+                value = ""
+              ),
+              helpText("Leave empty to use all available data. Core protocol parameters remain fixed in the backend.")
+            ),
+            column(
+              6,
+              tags$div(
+                style = "opacity: 0.65;",
+                tags$label("Clinically forced covariates (future feature)"),
+                tags$textarea(
+                  id = "forced_covariates_text_disabled",
+                  class = "form-control",
+                  rows = 5,
+                  placeholder = "Future feature: one clinically forced covariate per line",
+                  disabled = ""
+                ),
+                br(),
+                tags$label("Excluded artefactual covariates (future feature)"),
+                tags$textarea(
+                  id = "excluded_covariates_text_disabled",
+                  class = "form-control",
+                  rows = 5,
+                  placeholder = "Future feature: one excluded covariate per line",
+                  disabled = ""
+                ),
+                helpText("Displayed for protocol completeness only. Not yet connected to the analysis pipeline.")
+              )
+            )
+          )
+        )
+      ),
+
+      br(),
+
+      card(
+        card_header("Technical settings"),
+        card_body(
+          fluidRow(
+            column(
+              4,
+              textInput(
+                "cdm_database_schema",
+                "CDM database schema",
+                value = "main"
+              )
+            ),
+            column(
+              4,
+              textInput(
+                "cohort_database_schema",
+                "Cohort database schema",
+                value = "main"
+              )
+            ),
+            column(
+              4,
+              textInput(
+                "cohort_table",
+                "Cohort table",
+                value = "cohort"
+              )
+            )
+          ),
+          helpText("Automatically prefilled for Eunomia demo. Advanced users may change these values for external databases.")
+        )
+      )
+    )
+  )
+}
+
+
+execution_tab <- function() {
+  tabPanel(
+    title = "Execution",
+    value = "execution",
+    fluidPage(
+      br(),
+      fluidRow(
+        column(
+          4,
+          card(
+            card_header("Actions"),
+            card_body(
+              actionButton(
+                "initialize_connection",
+                "Initialize connection",
+                class = "btn-secondary w-100"
+              ),
+              br(), br(),
+              actionButton(
+                "run_primary_analysis",
+                "Run primary analysis",
+                class = "btn-primary w-100"
+              ),
+              br(), br(),
+              downloadButton(
+                "download_summary",
+                "Download summary",
+                class = "w-100"
+              )
+            )
+          )
+        ),
+        column(
+          8,
+          card(
+            card_header(
+              div(
+                style = "display: flex; justify-content: space-between; align-items: center; width: 100%;",
+                span("Execution log"),
+                actionButton(
+                  "clear_log",
+                  "Clear log",
+                  class = "btn btn-outline-secondary btn-sm"
+                )
+              )
+            ),
+            card_body(
+              verbatimTextOutput("log_output")
+            )
+          )
+        )
+      )
+    )
+  )
+}
+
+
+results_tab <- function() {
+  tabPanel(
+    title = "Results",
+    value = "results",
+    fluidPage(
+      br(),
+      tabsetPanel(
+        tabPanel(
+          "Summary",
+          br(),
+          tableOutput("analysis_summary_table"),
+          br(),
+          tableOutput("matching_summary_table")
+        ),
+        tabPanel(
+          "Propensity score",
+          br(),
+          plotlyOutput("ps_distribution_plot_before"),
+          br(),
+          plotlyOutput("ps_distribution_plot_after")
+        ),
+        tabPanel(
+          "Covariate balance",
+          br(),
+          plotlyOutput("smd_plot_before"),
+          br(),
+          plotlyOutput("smd_plot_after")
+        ),
+        tabPanel(
+          "Outcome diagnostics",
+          br(),
+          plotlyOutput("kaplan_meier_plot"),
+          br(),
+          tableOutput("ph_diagnostics_table")
+        ),
+        tabPanel(
+          "Files",
+          br(),
+          uiOutput("results_files_ui")
+        )
+      )
+    )
+  )
+}
