@@ -1,5 +1,5 @@
 {
-  "name": "Comparator - acetaminophen 650mg rectal",
+  "name": "Comparator - diclofenac",
   "expressionType": "SIMPLE_DEFINITION",
   "cdmVersionRange": ">=5.0.0",
   "PrimaryCriteria": {
@@ -22,19 +22,19 @@
   "ConceptSets": [
     {
       "id": 1,
-      "name": "Acetaminophen 650mg rectal (1125392)",
+      "name": "Diclofenac (1124300)",
       "expression": {
         "items": [
           {
             "concept": {
-              "CONCEPT_ID": 1125392,
-              "CONCEPT_NAME": "acetaminophen 650 MG Rectal Suppository",
+              "CONCEPT_ID": 1124300,
+              "CONCEPT_NAME": "diclofenac",
               "STANDARD_CONCEPT": "S",
               "INVALID_REASON": "V",
               "CONCEPT_CODE": "some_code",
               "DOMAIN_ID": "Drug",
               "VOCABULARY_ID": "RxNorm",
-              "CONCEPT_CLASS_ID": "Clinical Drug"
+              "CONCEPT_CLASS_ID": "Ingredient"
             },
             "isExcluded": false,
             "includeDescendants": true,

@@ -1,4 +1,8 @@
 # R/app_helpers.R
+# Purpose: Build and normalize app configuration inputs for the PLE pipeline.
+# Notes:
+# - Handles input normalization, cohort JSON management, and runtime config assembly.
+# - Keeps Shiny-side config building separate from pipeline execution logic.
 
 parse_csv_ids <- function(x) {
   x <- trimws(unlist(strsplit(as.character(x), ",")))
@@ -8,7 +12,6 @@ parse_csv_ids <- function(x) {
   }
   suppressWarnings(as.numeric(x))
 }
-
 
 null_if_empty <- function(x) {
   if (is.null(x)) {
@@ -24,7 +27,6 @@ null_if_empty <- function(x) {
   x
 }
 
-
 normalize_optional_text <- function(x) {
   x <- null_if_empty(x)
   if (is.null(x)) {
@@ -32,7 +34,6 @@ normalize_optional_text <- function(x) {
   }
   trimws(as.character(x))
 }
-
 
 normalize_ohdsi_date <- function(x, default = NULL) {
   x <- null_if_empty(x)
@@ -56,7 +57,6 @@ normalize_ohdsi_date <- function(x, default = NULL) {
   format(parsed, "%Y%m%d")
 }
 
-
 normalize_file_stem <- function(x) {
   x <- trimws(tolower(as.character(x)))
   x <- gsub("[[:space:]]+", "_", x)
@@ -66,7 +66,6 @@ normalize_file_stem <- function(x) {
   x
 }
 
-
 ensure_json_extension <- function(x) {
   if (!grepl("\\.json$", x, ignore.case = TRUE)) {
     paste0(x, ".json")
@@ -75,13 +74,11 @@ ensure_json_extension <- function(x) {
   }
 }
 
-
 ensure_dir <- function(path) {
   if (!dir.exists(path)) {
     dir.create(path, recursive = TRUE, showWarnings = FALSE)
   }
 }
-
 
 list_available_cohort_json_files <- function(folder) {
   ensure_dir(folder)
@@ -100,7 +97,6 @@ list_available_cohort_json_files <- function(folder) {
     stats::setNames(files, files)
   )
 }
-
 
 save_cohort_json_file <- function(folder, file_name, json_text, overwrite = FALSE) {
   ensure_dir(folder)
@@ -127,7 +123,6 @@ save_cohort_json_file <- function(folder, file_name, json_text, overwrite = FALS
   invisible(file_path)
 }
 
-
 resolve_existing_cohort_json_selection <- function(choice, folder) {
   choice <- normalize_optional_text(choice)
 
@@ -144,15 +139,13 @@ resolve_existing_cohort_json_selection <- function(choice, folder) {
   file_path
 }
 
-
 default_auto_cohort_ids <- function() {
   list(
-    target_cohort_id = 101,
-    comparator_cohort_id = 102,
-    primary_outcome_cohort_id = 201
+    target_cohort_id = 1,
+    comparator_cohort_id = 2,
+    primary_outcome_cohort_id = 3
   )
 }
-
 
 build_connection_config <- function(connection_info) {
   if (identical(connection_info$connection_mode, "demo")) {
@@ -179,7 +172,6 @@ build_connection_config <- function(connection_info) {
     oracle_temp_schema = connection_info$oracle_temp_schema
   )
 }
-
 
 build_technical_schema_config <- function(input, connection_info) {
   if (identical(connection_info$connection_mode, "demo")) {
@@ -212,7 +204,6 @@ build_technical_schema_config <- function(input, connection_info) {
     cohort_table = cohort_table
   )
 }
-
 
 build_cohorts_config <- function(input, connection_info) {
   cohort_json_folder <- normalize_optional_text(input$cohort_json_folder)
@@ -252,7 +243,6 @@ build_cohorts_config <- function(input, connection_info) {
   )
 }
 
-
 build_cm_data_config <- function(input, connection_info) {
   tech_cfg <- build_technical_schema_config(input, connection_info)
 
@@ -270,13 +260,12 @@ build_cm_data_config <- function(input, connection_info) {
   )
 }
 
-
 build_study_population_config <- function() {
   list(
     first_exposure_only = TRUE,
-    washout_period = 0,  # plus de filtrage ici pour commencer
+    washout_period = 0,
     remove_subjects_with_prior_outcome = FALSE,
-    prior_outcome_lookback = 0,  # ignoré si remove_subjects_with_prior_outcome = FALSE
+    prior_outcome_lookback = 0,
     require_time_at_risk = TRUE,
     min_time_at_risk = 1,
     risk_window_start = 1,
@@ -287,7 +276,6 @@ build_study_population_config <- function() {
     restrict_to_common_period = FALSE
   )
 }
-
 
 build_covariate_screening_config <- function() {
   list(
@@ -300,10 +288,11 @@ build_covariate_screening_config <- function() {
     include_forced_covariates = FALSE,
     forced_covariates_source = NULL,
     exclude_artefactual_covariates = FALSE,
-    excluded_covariates_source = NULL
+    excluded_covariates_source = NULL,
+    auto_exclude_high_correlation_covariates = TRUE,
+    high_correlation_threshold = 0.999
   )
 }
-
 
 build_ps_model_config <- function() {
   list(
@@ -314,7 +303,6 @@ build_ps_model_config <- function() {
     prior_variance = 0.01
   )
 }
-
 
 build_adjustment_config <- function() {
   list(
@@ -336,7 +324,6 @@ build_adjustment_config <- function() {
   )
 }
 
-
 build_outcome_model_config <- function() {
   list(
     model_type = "cox",
@@ -345,7 +332,6 @@ build_outcome_model_config <- function() {
     estimand = "att"
   )
 }
-
 
 build_runtime_config <- function(input) {
   output_folder <- normalize_optional_text(input$output_folder)
@@ -360,7 +346,6 @@ build_runtime_config <- function(input) {
     verbose = TRUE
   )
 }
-
 
 build_config_from_input <- function(input, connection_info) {
   list(

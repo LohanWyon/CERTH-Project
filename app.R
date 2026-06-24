@@ -8,6 +8,7 @@ library(plotly)
 library(CDMConnector)
 library(FeatureExtraction)
 library(CirceR)
+library(dplyr)
 
 source("R/app_helpers.R", local = TRUE)
 source("R/run_pipeline_shiny.R", local = TRUE)

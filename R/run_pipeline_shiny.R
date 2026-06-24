@@ -8,7 +8,8 @@ required_packages <- c(
   "Cyclops",
   "CohortGenerator",
   "CirceR",
-  "readr"
+  "readr",
+  "dplyr"
 )
 
 check_required_packages <- function(pkgs = required_packages) {
@@ -64,8 +65,7 @@ create_ps_prior <- function(ps_model_config) {
 
 generate_cohorts_if_requested <- function(connection_details,
                                           cohorts_config,
-                                          cm_data_config,
-                                          connection_config) {
+                                          cm_data_config) {
   if (!isTRUE(cohorts_config$generate_cohorts_from_json)) {
     return(invisible(NULL))
   }
@@ -144,7 +144,6 @@ build_cm_data <- function(connection_details,
                           cohorts_config,
                           cm_data_config,
                           study_population_config,
-                          connection_config,
                           output_config) {
   get_db_args <- CohortMethod::createGetDbCohortMethodDataArgs(
     removeDuplicateSubjects = study_population_config$remove_duplicate_subjects,
@@ -210,16 +209,12 @@ extract_ps_model_coefficients <- function(ps_object, cm_data) {
     return(NULL)
   }
 
-  coefficient_column <- intersect(c("coefficient", "estimate", "value"), names(ps_model))[1]
-  covariate_id_column <- intersect(c("covariateId", "covariate_id"), names(ps_model))[1]
-
-  if (is.na(coefficient_column) || is.na(covariate_id_column)) {
+  if (!("coefficient" %in% names(ps_model)) || !("covariateId" %in% names(ps_model))) {
     return(NULL)
   }
 
-  ps_model$abs_coefficient <- abs(ps_model[[coefficient_column]])
-  ps_model <- ps_model[!is.na(ps_model[[covariate_id_column]]), , drop = FALSE]
-  ps_model <- ps_model[ps_model[[covariate_id_column]] != 0, , drop = FALSE]
+  ps_model$abs_coefficient <- abs(ps_model$coefficient)
+  ps_model <- ps_model[ps_model$covariateId != 0, , drop = FALSE]
   ps_model[order(-ps_model$abs_coefficient), , drop = FALSE]
 }
 
@@ -239,7 +234,7 @@ run_covariate_screening <- function(population,
   }
 
   set.seed(covariate_screening_config$seed)
-  selected_covariate_ids <- c()
+  selected_covariate_ids <- integer(0)
   screening_log <- list()
 
   for (run_id in seq_len(covariate_screening_config$number_of_runs)) {
@@ -276,35 +271,191 @@ run_covariate_screening <- function(population,
       createPsArgs = screening_ps_args
     )
 
-    screening_coeffs <- extract_ps_model_coefficients(screening_ps, cm_data)
+    screening_coefficients <- extract_ps_model_coefficients(screening_ps, cm_data)
 
-    if (is.null(screening_coeffs) || nrow(screening_coeffs) == 0) {
+    if (is.null(screening_coefficients) || nrow(screening_coefficients) == 0) {
+      screening_log[[run_id]] <- data.frame(
+        run_id = run_id,
+        n_treated = sum(screening_population$treatment == 1, na.rm = TRUE),
+        n_comparator = sum(screening_population$treatment == 0, na.rm = TRUE),
+        n_selected_this_run = 0L,
+        n_selected_cumulative = length(selected_covariate_ids)
+      )
       next
     }
 
-    top_ids <- unique(utils::head(
-      screening_coeffs[[intersect(c("covariateId", "covariate_id"), names(screening_coeffs))[1]]],
+    top_covariate_ids <- unique(utils::head(
+      as.integer(screening_coefficients$covariateId),
       covariate_screening_config$top_covariates_per_run
     ))
+    top_covariate_ids <- top_covariate_ids[!is.na(top_covariate_ids)]
 
-    selected_covariate_ids <- union(selected_covariate_ids, top_ids)
+    selected_covariate_ids <- union(selected_covariate_ids, top_covariate_ids)
+    selected_covariate_ids <- as.integer(selected_covariate_ids)
 
     screening_log[[run_id]] <- data.frame(
       run_id = run_id,
       n_treated = sum(screening_population$treatment == 1, na.rm = TRUE),
       n_comparator = sum(screening_population$treatment == 0, na.rm = TRUE),
-      n_selected_this_run = length(top_ids),
+      n_selected_this_run = length(top_covariate_ids),
       n_selected_cumulative = length(selected_covariate_ids)
     )
   }
 
   screening_log_df <- if (length(screening_log) > 0) do.call(rbind, screening_log) else data.frame()
-  readr::write_csv(screening_log_df, file.path(output_config$output_folder, "covariate_screening_log.csv"))
+
+  readr::write_csv(
+    screening_log_df,
+    file.path(output_config$output_folder, "covariate_screening_log.csv")
+  )
 
   list(
-    selected_covariate_ids = if (length(selected_covariate_ids) == 0) NULL else selected_covariate_ids,
+    selected_covariate_ids = if (length(selected_covariate_ids) == 0) NULL else as.integer(selected_covariate_ids),
     screening_log = screening_log_df
   )
+}
+
+find_high_correlation_covariates <- function(cm_data,
+                                             population,
+                                             threshold = 0.99,
+                                             output_folder = NULL,
+                                             analysis_id_filter = NULL) {
+  covariates <- cm_data$covariates
+  covariate_ref <- cm_data$covariateRef
+
+  debug_dir <- if (!is.null(output_folder)) output_folder else "output/ple_analysis"
+  ensure_dir(debug_dir)
+
+  debug_file <- file.path(debug_dir, "debug_covariate_corr_debug.txt")
+
+  safe_log <- function(...) {
+    msg <- paste(..., collapse = "")
+    cat(msg, "\n", file = debug_file, append = TRUE)
+  }
+
+  if (is.null(covariates)) {
+    safe_log("covariates is NULL")
+    return(data.frame())
+  }
+
+  covariates_df <- covariates |>
+    dplyr::select(rowId, covariateId) |>
+    dplyr::collect()
+
+  safe_log("nrow(covariates_df) = ", nrow(covariates_df))
+
+  covariates_df <- covariates_df[!is.na(covariates_df$rowId) & !is.na(covariates_df$covariateId), , drop = FALSE]
+  safe_log("nrow(covariates_df) after NA filter = ", nrow(covariates_df))
+
+  if (nrow(covariates_df) == 0) {
+    safe_log("covariates_df is empty after NA filter")
+    return(data.frame())
+  }
+
+  required_population_columns <- c("rowId", "treatment")
+  if (!all(required_population_columns %in% names(population))) {
+    safe_log(
+      "population is missing required columns: ",
+      paste(setdiff(required_population_columns, names(population)), collapse = ", ")
+    )
+    return(data.frame())
+  }
+
+  population_sub <- population[, required_population_columns, drop = FALSE]
+  population_sub <- population_sub[!is.na(population_sub$rowId) & !is.na(population_sub$treatment), , drop = FALSE]
+  safe_log("nrow(population_sub) initial = ", nrow(population_sub))
+
+  population_sub <- population_sub[population_sub$rowId %in% covariates_df$rowId, , drop = FALSE]
+  safe_log("nrow(population_sub) after rowId match = ", nrow(population_sub))
+
+  if (nrow(population_sub) == 0) {
+    safe_log("population_sub empty after rowId matching")
+    return(data.frame())
+  }
+
+  covariate_pairs <- unique(covariates_df[, c("rowId", "covariateId"), drop = FALSE])
+
+  if (!is.null(covariate_ref)) {
+    covariate_ref_names <- colnames(covariate_ref)
+
+    if ("covariateId" %in% covariate_ref_names &&
+        !is.null(analysis_id_filter) &&
+        "analysisId" %in% covariate_ref_names) {
+      keep_ids <- covariate_ref |>
+        dplyr::filter(.data$analysisId %in% analysis_id_filter) |>
+        dplyr::select(.data$covariateId) |>
+        dplyr::collect() |>
+        dplyr::pull(.data$covariateId)
+
+      keep_ids <- as.numeric(keep_ids)
+      keep_ids <- keep_ids[!is.na(keep_ids)]
+
+      safe_log("Using analysis_id_filter; length(keep_ids) = ", length(keep_ids))
+
+      covariate_pairs <- covariate_pairs[covariate_pairs$covariateId %in% keep_ids, , drop = FALSE]
+    }
+  }
+
+  covariate_ids <- sort(unique(covariate_pairs$covariateId))
+  covariate_ids <- covariate_ids[!is.na(covariate_ids)]
+  safe_log("length(covariate_ids) = ", length(covariate_ids))
+
+  if (length(covariate_ids) == 0) {
+    safe_log("No covariate_ids to process")
+    return(data.frame())
+  }
+
+  out <- vector("list", length(covariate_ids))
+
+  for (i in seq_along(covariate_ids)) {
+    current_id <- covariate_ids[i]
+    present_row_ids <- covariate_pairs$rowId[covariate_pairs$covariateId == current_id]
+
+    x <- as.integer(population_sub$rowId %in% present_row_ids)
+    y <- population_sub$treatment
+
+    if (length(unique(x)) < 2 || length(unique(y)) < 2) {
+      correlation <- NA_real_
+    } else {
+      correlation <- suppressWarnings(stats::cor(x, y, method = "pearson"))
+    }
+
+    mean_0 <- mean(x[y == 0], na.rm = TRUE)
+    mean_1 <- mean(x[y == 1], na.rm = TRUE)
+
+    out[[i]] <- data.frame(
+      covariateId = current_id,
+      mean_0 = mean_0,
+      mean_1 = mean_1,
+      correlation = correlation
+    )
+  }
+
+  out <- do.call(rbind, out)
+
+  if (is.null(out) || !is.data.frame(out) || nrow(out) == 0) {
+    safe_log("out is empty after loop")
+    return(data.frame())
+  }
+
+  out_all <- out[order(-abs(out$correlation)), , drop = FALSE]
+  rownames(out_all) <- NULL
+
+  readr::write_csv(
+    out_all,
+    file.path(debug_dir, "debug_all_covariate_correlations.csv")
+  )
+
+  out_sel <- out[is.finite(out$correlation) & abs(out$correlation) >= threshold, , drop = FALSE]
+  safe_log("nrow(out_all) = ", nrow(out_all), " ; nrow(out_sel) = ", nrow(out_sel))
+
+  if (nrow(out_sel) == 0) {
+    return(out_sel)
+  }
+
+  out_sel <- out_sel[order(-abs(out_sel$correlation), -pmax(out_sel$mean_0, out_sel$mean_1)), , drop = FALSE]
+  rownames(out_sel) <- NULL
+  out_sel
 }
 
 fit_ps_model <- function(population,
@@ -312,19 +463,71 @@ fit_ps_model <- function(population,
                          covariate_screening_config,
                          ps_model_config,
                          output_config) {
-  screening_res <- run_covariate_screening(
+  screening_results <- run_covariate_screening(
     population = population,
     cm_data = cm_data,
     covariate_screening_config = covariate_screening_config,
     output_config = output_config
   )
 
+  high_correlation_table <- data.frame()
+  auto_excluded_covariate_ids <- integer(0)
+
+  if (isTRUE(covariate_screening_config$auto_exclude_high_correlation_covariates)) {
+    high_correlation_table <- find_high_correlation_covariates(
+      cm_data = cm_data,
+      population = population,
+      threshold = covariate_screening_config$high_correlation_threshold %||% 0.99,
+      output_folder = output_config$output_folder,
+      analysis_id_filter = c(410, 412, 413)
+    )
+
+    if (!is.null(high_correlation_table) && nrow(high_correlation_table) > 0) {
+      auto_excluded_covariate_ids <- unique(as.integer(high_correlation_table$covariateId))
+      auto_excluded_covariate_ids <- auto_excluded_covariate_ids[!is.na(auto_excluded_covariate_ids)]
+    }
+  }
+
+  message(
+    "[custom fit_ps_model] Auto-excluded covariate IDs: ",
+    if (length(auto_excluded_covariate_ids) == 0) "<none>" else paste(auto_excluded_covariate_ids, collapse = ", ")
+  )
+
+  readr::write_csv(
+    high_correlation_table,
+    file.path(output_config$output_folder, "debug_high_correlation_table.csv")
+  )
+
+  if (length(auto_excluded_covariate_ids) > 0) {
+    readr::write_csv(
+      data.frame(covariateId = auto_excluded_covariate_ids),
+      file.path(output_config$output_folder, "debug_auto_excluded_covariate_ids.csv")
+    )
+  }
+
+  final_include_ids <- screening_results$selected_covariate_ids
+  if (is.null(final_include_ids) || length(final_include_ids) == 0) {
+    final_include_ids <- NULL
+  } else {
+    final_include_ids <- as.integer(final_include_ids)
+    final_include_ids <- final_include_ids[!is.na(final_include_ids)]
+  }
+
+  final_exclude_ids <- auto_excluded_covariate_ids
+  if (is.null(final_exclude_ids) || length(final_exclude_ids) == 0) {
+    final_exclude_ids <- NULL
+  } else {
+    final_exclude_ids <- as.integer(final_exclude_ids)
+    final_exclude_ids <- final_exclude_ids[!is.na(final_exclude_ids)]
+  }
+
   ps_args <- CohortMethod::createCreatePsArgs(
     maxCohortSizeForFitting = ps_model_config$max_cohort_size_for_fitting,
-    errorOnHighCorrelation = FALSE,
+    errorOnHighCorrelation = TRUE,
     stopOnError = FALSE,
     prior = create_ps_prior(ps_model_config),
-    includeCovariateIds = screening_res$selected_covariate_ids
+    includeCovariateIds = final_include_ids,
+    excludeCovariateIds = final_exclude_ids
   )
 
   ps <- CohortMethod::createPs(
@@ -337,16 +540,18 @@ fit_ps_model <- function(population,
 
   saveRDS(ps, file.path(output_config$output_folder, "ps.rds"))
   saveRDS(ps_model_coefficients, file.path(output_config$output_folder, "ps_model_coefficients.rds"))
+  saveRDS(auto_excluded_covariate_ids, file.path(output_config$output_folder, "auto_excluded_covariate_ids.rds"))
 
   list(
     ps = ps,
-    screening = screening_res,
-    ps_model_coefficients = ps_model_coefficients
+    screening = screening_results,
+    ps_model_coefficients = ps_model_coefficients,
+    auto_excluded_covariate_ids = auto_excluded_covariate_ids,
+    high_correlation_table = high_correlation_table
   )
 }
 
-apply_trimming_if_needed <- function(ps,
-                                     adjustment_config) {
+apply_trimming_if_needed <- function(ps, adjustment_config) {
   if (!isTRUE(adjustment_config$use_trimming)) {
     return(ps)
   }
@@ -374,18 +579,22 @@ compute_balance_metrics <- function(covariate_balance) {
     ))
   }
 
-  col_after <- intersect(c("asd", "asmd", "stdDiff", "standardizedMeanDifference"), names(covariate_balance))
-  if (length(col_after) == 0) {
+  balance_column <- intersect(
+    c("asd", "asmd", "stdDiff", "standardizedMeanDifference"),
+    names(covariate_balance)
+  )
+
+  if (length(balance_column) == 0) {
     return(list(
       max_abs_smd_after = NA_real_,
       pct_above_0_1_after = NA_real_
     ))
   }
 
-  vals <- abs(covariate_balance[[col_after[1]]])
-  vals <- vals[is.finite(vals)]
+  balance_values <- abs(covariate_balance[[balance_column[1]]])
+  balance_values <- balance_values[is.finite(balance_values)]
 
-  if (length(vals) == 0) {
+  if (length(balance_values) == 0) {
     return(list(
       max_abs_smd_after = NA_real_,
       pct_above_0_1_after = NA_real_
@@ -393,8 +602,8 @@ compute_balance_metrics <- function(covariate_balance) {
   }
 
   list(
-    max_abs_smd_after = max(vals),
-    pct_above_0_1_after = mean(vals > 0.1)
+    max_abs_smd_after = max(balance_values),
+    pct_above_0_1_after = mean(balance_values > 0.1)
   )
 }
 
@@ -438,6 +647,7 @@ apply_matching <- function(ps,
     final_match <- match_once(adjustment_config$caliper_if_low_match_rate)
   } else {
     balance_metrics <- compute_balance_metrics(initial_match$covariate_balance)
+
     if (isTRUE(adjustment_config$allow_caliper_adaptation) &&
         matched_fraction > adjustment_config$high_match_rate_threshold &&
         is.finite(balance_metrics$pct_above_0_1_after) &&
@@ -480,10 +690,10 @@ fit_outcome_model <- function(adjusted_population,
 
 build_analysis_summary <- function(cfg,
                                    study_population,
-                                   adjusted_population,
                                    outcome_model,
                                    matching_result,
-                                   screening_result) {
+                                   screening_result,
+                                   ps_model_coefficients) {
   outcome_estimate <- outcome_model$outcomeModelTreatmentEstimate
 
   if (!is.null(outcome_estimate) && nrow(outcome_estimate) >= 1) {
@@ -505,6 +715,15 @@ build_analysis_summary <- function(cfg,
     p_value <- NA_real_
   }
 
+  selected_covariates_count <- if (!is.null(screening_result$selected_covariate_ids) &&
+                                   length(screening_result$selected_covariate_ids) > 0) {
+    length(screening_result$selected_covariate_ids)
+  } else if (!is.null(ps_model_coefficients) && nrow(ps_model_coefficients) > 0) {
+    nrow(ps_model_coefficients)
+  } else {
+    NA_integer_
+  }
+
   data.frame(
     target_cohort_id = cfg$cohorts$target_cohort_id,
     comparator_cohort_id = cfg$cohorts$comparator_cohort_id,
@@ -513,7 +732,7 @@ build_analysis_summary <- function(cfg,
     comparator_count_before_matching = sum(study_population$treatment == 0, na.rm = TRUE),
     treated_count_after_matching = sum(matching_result$matched_population$treatment == 1, na.rm = TRUE),
     comparator_count_after_matching = sum(matching_result$matched_population$treatment == 0, na.rm = TRUE),
-    selected_covariates_count = length(screening_result$selected_covariate_ids %||% numeric(0)),
+    selected_covariates_count = selected_covariates_count,
     caliper_used = matching_result$caliper_used,
     hazard_ratio = rr,
     ci_95_lower = ci_95_lower,
@@ -602,22 +821,19 @@ run_primary_ple_pipeline <- function(cfg) {
   generate_cohorts_if_requested(
     connection_details = connection_details,
     cohorts_config = cfg$cohorts,
-    cm_data_config = cfg$cm_data,
-    connection_config = cfg$connection
+    cm_data_config = cfg$cm_data
   )
 
-  counts <- log_generated_cohort_counts(
+  log_generated_cohort_counts(
     connection_details = connection_details,
     cohorts_config = cfg$cohorts
   )
-  print(counts)
 
   cm_data <- build_cm_data(
     connection_details = connection_details,
     cohorts_config = cfg$cohorts,
     cm_data_config = cfg$cm_data,
     study_population_config = cfg$study_population,
-    connection_config = cfg$connection,
     output_config = cfg$output
   )
 
@@ -658,10 +874,10 @@ run_primary_ple_pipeline <- function(cfg) {
   analysis_summary <- build_analysis_summary(
     cfg = cfg,
     study_population = study_population,
-    adjusted_population = matching_result$matched_population,
     outcome_model = outcome_model,
     matching_result = matching_result,
-    screening_result = ps_fit$screening
+    screening_result = ps_fit$screening,
+    ps_model_coefficients = ps_fit$ps_model_coefficients
   )
 
   matching_summary <- build_matching_summary(
