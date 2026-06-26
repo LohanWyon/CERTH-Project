@@ -37,14 +37,12 @@ cohort_json_selector_ui <- function(prefix, label) {
   )
 }
 
-
 configuration_tab <- function() {
   tabPanel(
     title = "Configuration",
     value = "configuration",
     fluidPage(
       br(),
-
       card(
         card_header("Database connection"),
         card_body(
@@ -84,9 +82,7 @@ configuration_tab <- function() {
           )
         )
       ),
-
       br(),
-
       card(
         card_header("Cohort definitions"),
         card_body(
@@ -115,11 +111,9 @@ configuration_tab <- function() {
               helpText("Leave empty to use the default analysis output folder.")
             )
           ),
-
           br(),
           tags$hr(),
           br(),
-
           fluidRow(
             column(
               4,
@@ -134,9 +128,7 @@ configuration_tab <- function() {
               cohort_json_selector_ui("outcome", "Primary outcome")
             )
           ),
-
           br(),
-
           textInput(
             "outcome_cohort_ids",
             "Additional outcome cohort IDs (comma-separated, optional)",
@@ -145,9 +137,7 @@ configuration_tab <- function() {
           helpText("Optional. The primary analysis uses the primary outcome cohort above.")
         )
       ),
-
       br(),
-
       card(
         card_header("Protocol options"),
         card_body(
@@ -193,9 +183,7 @@ configuration_tab <- function() {
           )
         )
       ),
-
       br(),
-
       card(
         card_header("Technical settings"),
         card_body(
@@ -232,6 +220,189 @@ configuration_tab <- function() {
   )
 }
 
+advanced_tuning_tab <- function() {
+  tabPanel(
+    title = "Advanced tuning",
+    value = "advanced_tuning",
+    fluidPage(
+      br(),
+      card(
+        card_header("Optional technical adaptation"),
+        card_body(
+          p("These settings are optional. Default values match the primary protocol and can usually be left unchanged."),
+          p("They are intended for technical adaptation to database size, propensity score overlap, model stability, and development or debugging workflows.")
+        )
+      ),
+      br(),
+      fluidRow(
+        column(
+          6,
+          card(
+            card_header("Pre-screening"),
+            card_body(
+              checkboxInput(
+                "screening_enabled",
+                "Enable covariate pre-screening",
+                value = TRUE
+              ),
+              numericInput(
+                "screening_number_of_runs",
+                "Number of screening runs",
+                value = 5,
+                min = 1,
+                step = 1
+              ),
+              numericInput(
+                "screening_top_covariates_per_run",
+                "Top covariates retained per run",
+                value = 1000,
+                min = 1,
+                step = 50
+              ),
+              numericInput(
+                "screening_min_subjects_per_group",
+                "Minimum subjects per group for screening",
+                value = 500,
+                min = 50,
+                step = 50
+              )
+            )
+          )
+        ),
+        column(
+          6,
+          card(
+            card_header("Matching"),
+            card_body(
+              numericInput(
+                "matching_caliper",
+                "Initial caliper",
+                value = 0.2,
+                min = 0.01,
+                max = 1,
+                step = 0.01
+              ),
+              checkboxInput(
+                "matching_allow_caliper_adaptation",
+                "Enable rule-based caliper adaptation",
+                value = TRUE
+              ),
+              numericInput(
+                "matching_low_match_rate_threshold",
+                "Low match rate threshold",
+                value = 0.25,
+                min = 0,
+                max = 1,
+                step = 0.01
+              ),
+              numericInput(
+                "matching_caliper_if_low_match_rate",
+                "Caliper if low match rate",
+                value = 0.25,
+                min = 0.01,
+                max = 1,
+                step = 0.01
+              ),
+              numericInput(
+                "matching_high_match_rate_threshold",
+                "High match rate threshold",
+                value = 0.90,
+                min = 0,
+                max = 1,
+                step = 0.01
+              ),
+              numericInput(
+                "matching_poor_balance_threshold",
+                "Poor balance threshold",
+                value = 0.10,
+                min = 0,
+                max = 1,
+                step = 0.01
+              ),
+              numericInput(
+                "matching_caliper_if_poor_balance",
+                "Caliper if poor balance",
+                value = 0.15,
+                min = 0.01,
+                max = 1,
+                step = 0.01
+              )
+            )
+          )
+        )
+      ),
+      br(),
+      fluidRow(
+        column(
+          6,
+          card(
+            card_header("Trimming"),
+            card_body(
+              checkboxInput(
+                "trimming_enabled",
+                "Enable propensity score trimming",
+                value = FALSE
+              ),
+              numericInput(
+                "trimming_lower_percentile",
+                "Lower percentile",
+                value = 0.01,
+                min = 0,
+                max = 0.49,
+                step = 0.01
+              ),
+              numericInput(
+                "trimming_upper_percentile",
+                "Upper percentile",
+                value = 0.99,
+                min = 0.51,
+                max = 1,
+                step = 0.01
+              )
+            )
+          )
+        ),
+        column(
+          6,
+          card(
+            card_header("Outcome model stability"),
+            card_body(
+              numericInput(
+                "outcome_prior_variance",
+                "Outcome prior variance",
+                value = 2,
+                min = 0.001,
+                step = 0.5
+              ),
+              checkboxInput(
+                "outcome_use_cross_validation",
+                "Use cross-validation for outcome model",
+                value = FALSE
+              )
+            )
+          )
+        )
+      ),
+      br(),
+      card(
+        card_header("Saved files"),
+        card_body(
+          checkboxInput(
+            "save_dev_files",
+            "Save additional development files",
+            value = FALSE
+          ),
+          checkboxInput(
+            "save_debug_files",
+            "Save additional debug files",
+            value = FALSE
+          ),
+          helpText("Final analysis outputs are always saved automatically. Development and debug files are optional and are written to separate subfolders.")
+        )
+      )
+    )
+  )
+}
 
 execution_tab <- function() {
   tabPanel(
@@ -288,7 +459,6 @@ execution_tab <- function() {
     )
   )
 }
-
 
 results_tab <- function() {
   tabPanel(

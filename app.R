@@ -20,6 +20,7 @@ ui <- navbarPage(
   id = "main_nav",
   theme = bs_theme(version = 5, bootswatch = "flatly"),
   configuration_tab(),
+  advanced_tuning_tab(),
   execution_tab(),
   results_tab()
 )
@@ -40,7 +41,7 @@ server <- function(input, output, session) {
   app_defaults <- list(
     use_demo_connection = TRUE,
     demo_dbms = "duckdb",
-    demo_source_path = CDMConnector::eunomiaDir(),
+    demo_source_path = CDMConnector::eunomiaDir(datasetName = "synpuf-110k"),
     cohort_json_folder = "cohorts_json"
   )
 

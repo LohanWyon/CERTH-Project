@@ -32,6 +32,46 @@ ensure_dir <- function(path) {
   a
 }
 
+write_csv_safe <- function(x, path) {
+  if (is.null(x)) {
+    return(invisible(NULL))
+  }
+  ensure_dir(dirname(path))
+  readr::write_csv(x, path)
+  invisible(path)
+}
+
+save_rds_safe <- function(x, path) {
+  if (is.null(x)) {
+    return(invisible(NULL))
+  }
+  ensure_dir(dirname(path))
+  saveRDS(x, path)
+  invisible(path)
+}
+
+get_output_paths <- function(output_config) {
+  final_dir <- output_config$final_output_folder %||% output_config$output_folder
+  dev_dir <- output_config$dev_output_folder %||% file.path(final_dir, "dev")
+  debug_dir <- output_config$debug_output_folder %||% file.path(final_dir, "debug")
+
+  ensure_dir(final_dir)
+
+  if (isTRUE(output_config$save_dev_files)) {
+    ensure_dir(dev_dir)
+  }
+
+  if (isTRUE(output_config$save_debug_files)) {
+    ensure_dir(debug_dir)
+  }
+
+  list(
+    final = final_dir,
+    dev = dev_dir,
+    debug = debug_dir
+  )
+}
+
 read_json_text <- function(path) {
   if (is.null(path) || !file.exists(path)) {
     stop("JSON file not found: ", path)
@@ -145,6 +185,8 @@ build_cm_data <- function(connection_details,
                           cm_data_config,
                           study_population_config,
                           output_config) {
+  paths <- get_output_paths(output_config)
+
   get_db_args <- CohortMethod::createGetDbCohortMethodDataArgs(
     removeDuplicateSubjects = study_population_config$remove_duplicate_subjects,
     firstExposureOnly = study_population_config$first_exposure_only,
@@ -168,7 +210,10 @@ build_cm_data <- function(connection_details,
     getDbCohortMethodDataArgs = get_db_args
   )
 
-  saveRDS(cm_data, file.path(output_config$output_folder, "cm_data.rds"))
+  if (isTRUE(output_config$save_dev_files)) {
+    save_rds_safe(cm_data, file.path(paths$dev, "cm_data.rds"))
+  }
+
   cm_data
 }
 
@@ -176,6 +221,8 @@ build_study_population <- function(cm_data,
                                    cohorts_config,
                                    study_population_config,
                                    output_config) {
+  paths <- get_output_paths(output_config)
+
   study_population_args <- CohortMethod::createCreateStudyPopulationArgs(
     removeSubjectsWithPriorOutcome = study_population_config$remove_subjects_with_prior_outcome,
     priorOutcomeLookback = study_population_config$prior_outcome_lookback,
@@ -195,7 +242,10 @@ build_study_population <- function(cm_data,
     stop("Study population is empty after applying inclusion and exclusion criteria.")
   }
 
-  saveRDS(study_population, file.path(output_config$output_folder, "study_population.rds"))
+  if (isTRUE(output_config$save_dev_files)) {
+    save_rds_safe(study_population, file.path(paths$dev, "study_population.rds"))
+  }
+
   study_population
 }
 
@@ -222,6 +272,8 @@ run_covariate_screening <- function(population,
                                     cm_data,
                                     covariate_screening_config,
                                     output_config) {
+  paths <- get_output_paths(output_config)
+
   if (!isTRUE(covariate_screening_config$enabled)) {
     return(list(selected_covariate_ids = NULL, screening_log = NULL))
   }
@@ -285,13 +337,13 @@ run_covariate_screening <- function(population,
     }
 
     top_covariate_ids <- unique(utils::head(
-      as.integer(screening_coefficients$covariateId),
+      as.numeric(screening_coefficients$covariateId),
       covariate_screening_config$top_covariates_per_run
     ))
     top_covariate_ids <- top_covariate_ids[!is.na(top_covariate_ids)]
 
     selected_covariate_ids <- union(selected_covariate_ids, top_covariate_ids)
-    selected_covariate_ids <- as.integer(selected_covariate_ids)
+    selected_covariate_ids <- as.numeric(selected_covariate_ids)
 
     screening_log[[run_id]] <- data.frame(
       run_id = run_id,
@@ -304,10 +356,12 @@ run_covariate_screening <- function(population,
 
   screening_log_df <- if (length(screening_log) > 0) do.call(rbind, screening_log) else data.frame()
 
-  readr::write_csv(
-    screening_log_df,
-    file.path(output_config$output_folder, "covariate_screening_log.csv")
-  )
+  if (isTRUE(output_config$save_dev_files) && nrow(screening_log_df) > 0) {
+    write_csv_safe(
+      screening_log_df,
+      file.path(paths$dev, "covariate_screening_log.csv")
+    )
+  }
 
   list(
     selected_covariate_ids = if (length(selected_covariate_ids) == 0) NULL else as.integer(selected_covariate_ids),
@@ -323,7 +377,7 @@ find_high_correlation_covariates <- function(cm_data,
   covariates <- cm_data$covariates
   covariate_ref <- cm_data$covariateRef
 
-  debug_dir <- if (!is.null(output_folder)) output_folder else "output/ple_analysis"
+  debug_dir <- output_folder %||% "output/ple_analysis/debug"
   ensure_dir(debug_dir)
 
   debug_file <- file.path(debug_dir, "debug_covariate_corr_debug.txt")
@@ -441,7 +495,8 @@ find_high_correlation_covariates <- function(cm_data,
   out_all <- out[order(-abs(out$correlation)), , drop = FALSE]
   rownames(out_all) <- NULL
 
-  readr::write_csv(
+
+  write_csv_safe(
     out_all,
     file.path(debug_dir, "debug_all_covariate_correlations.csv")
   )
@@ -463,6 +518,8 @@ fit_ps_model <- function(population,
                          covariate_screening_config,
                          ps_model_config,
                          output_config) {
+  paths <- get_output_paths(output_config)
+
   screening_results <- run_covariate_screening(
     population = population,
     cm_data = cm_data,
@@ -474,11 +531,13 @@ fit_ps_model <- function(population,
   auto_excluded_covariate_ids <- integer(0)
 
   if (isTRUE(covariate_screening_config$auto_exclude_high_correlation_covariates)) {
+    debug_output_folder <- if (isTRUE(output_config$save_debug_files)) paths$debug else NULL
+
     high_correlation_table <- find_high_correlation_covariates(
       cm_data = cm_data,
       population = population,
       threshold = covariate_screening_config$high_correlation_threshold %||% 0.99,
-      output_folder = output_config$output_folder,
+      output_folder = debug_output_folder,
       analysis_id_filter = c(410, 412, 413)
     )
 
@@ -493,16 +552,18 @@ fit_ps_model <- function(population,
     if (length(auto_excluded_covariate_ids) == 0) "<none>" else paste(auto_excluded_covariate_ids, collapse = ", ")
   )
 
-  readr::write_csv(
-    high_correlation_table,
-    file.path(output_config$output_folder, "debug_high_correlation_table.csv")
-  )
-
-  if (length(auto_excluded_covariate_ids) > 0) {
-    readr::write_csv(
-      data.frame(covariateId = auto_excluded_covariate_ids),
-      file.path(output_config$output_folder, "debug_auto_excluded_covariate_ids.csv")
+  if (isTRUE(output_config$save_debug_files)) {
+    write_csv_safe(
+      high_correlation_table,
+      file.path(paths$debug, "debug_high_correlation_table.csv")
     )
+
+    if (length(auto_excluded_covariate_ids) > 0) {
+      write_csv_safe(
+        data.frame(covariateId = auto_excluded_covariate_ids),
+        file.path(paths$debug, "debug_auto_excluded_covariate_ids.csv")
+      )
+    }
   }
 
   final_include_ids <- screening_results$selected_covariate_ids
@@ -521,6 +582,8 @@ fit_ps_model <- function(population,
     final_exclude_ids <- final_exclude_ids[!is.na(final_exclude_ids)]
   }
 
+  message("[fit_ps_model] final include covariate count: ", length(final_include_ids))
+  
   ps_args <- CohortMethod::createCreatePsArgs(
     maxCohortSizeForFitting = ps_model_config$max_cohort_size_for_fitting,
     errorOnHighCorrelation = TRUE,
@@ -538,9 +601,11 @@ fit_ps_model <- function(population,
 
   ps_model_coefficients <- extract_ps_model_coefficients(ps, cm_data)
 
-  saveRDS(ps, file.path(output_config$output_folder, "ps.rds"))
-  saveRDS(ps_model_coefficients, file.path(output_config$output_folder, "ps_model_coefficients.rds"))
-  saveRDS(auto_excluded_covariate_ids, file.path(output_config$output_folder, "auto_excluded_covariate_ids.rds"))
+  if (isTRUE(output_config$save_dev_files)) {
+    save_rds_safe(ps, file.path(paths$dev, "ps.rds"))
+    save_rds_safe(ps_model_coefficients, file.path(paths$dev, "ps_model_coefficients.rds"))
+    save_rds_safe(auto_excluded_covariate_ids, file.path(paths$dev, "auto_excluded_covariate_ids.rds"))
+  }
 
   list(
     ps = ps,
@@ -656,9 +721,6 @@ apply_matching <- function(ps,
     }
   }
 
-  saveRDS(final_match$matched_population, file.path(output_config$output_folder, "adjusted_population.rds"))
-  saveRDS(final_match$covariate_balance, file.path(output_config$output_folder, "covariate_balance.rds"))
-
   final_match
 }
 
@@ -666,10 +728,16 @@ fit_outcome_model <- function(adjusted_population,
                               cm_data,
                               outcome_model_config,
                               output_config) {
+  message(
+    "[fit_outcome_model] prior_variance = ", outcome_model_config$prior_variance,
+    ", use_cv = ", outcome_model_config$use_cross_validation
+  )
+  paths <- get_output_paths(output_config)
+
   prior_outcome <- Cyclops::createPrior(
     priorType = "normal",
-    useCrossValidation = FALSE,
-    variance = 2
+    useCrossValidation = isTRUE(outcome_model_config$use_cross_validation),
+    variance = outcome_model_config$prior_variance %||% 2
   )
 
   outcome_args <- CohortMethod::createFitOutcomeModelArgs(
@@ -684,7 +752,7 @@ fit_outcome_model <- function(adjusted_population,
     fitOutcomeModelArgs = outcome_args
   )
 
-  saveRDS(outcome_model, file.path(output_config$output_folder, "outcome_model.rds"))
+  save_rds_safe(outcome_model, file.path(paths$final, "outcome_model.rds"))
   outcome_model
 }
 
@@ -764,28 +832,25 @@ build_matching_summary <- function(study_population,
   )
 }
 
-save_analysis_outputs <- function(output_folder,
+save_analysis_outputs <- function(output_config,
                                   analysis_summary,
                                   matching_summary,
-                                  study_population,
                                   adjusted_population,
                                   covariate_balance,
-                                  screening_log,
-                                  ps_model_coefficients) {
-  readr::write_csv(analysis_summary, file.path(output_folder, "analysis_summary.csv"))
-  readr::write_csv(matching_summary, file.path(output_folder, "matching_summary.csv"))
+                                  ps_model_coefficients,
+                                  pipeline_artifacts) {
+  paths <- get_output_paths(output_config)
 
-  if (!is.null(screening_log) && nrow(screening_log) > 0) {
-    readr::write_csv(screening_log, file.path(output_folder, "covariate_screening_log.csv"))
-  }
+  write_csv_safe(analysis_summary, file.path(paths$final, "analysis_summary.csv"))
+  write_csv_safe(matching_summary, file.path(paths$final, "matching_summary.csv"))
 
   if (!is.null(ps_model_coefficients) && nrow(ps_model_coefficients) > 0) {
-    readr::write_csv(ps_model_coefficients, file.path(output_folder, "ps_model_coefficients.csv"))
+    write_csv_safe(ps_model_coefficients, file.path(paths$final, "ps_model_coefficients.csv"))
   }
 
-  saveRDS(study_population, file.path(output_folder, "study_population.rds"))
-  saveRDS(adjusted_population, file.path(output_folder, "adjusted_population.rds"))
-  saveRDS(covariate_balance, file.path(output_folder, "covariate_balance.rds"))
+  save_rds_safe(adjusted_population, file.path(paths$final, "adjusted_population.rds"))
+  save_rds_safe(covariate_balance, file.path(paths$final, "covariate_balance.rds"))
+  save_rds_safe(pipeline_artifacts, file.path(paths$final, "pipeline_artifacts.rds"))
 }
 
 log_generated_cohort_counts <- function(connection_details, cohorts_config) {
@@ -814,7 +879,7 @@ log_generated_cohort_counts <- function(connection_details, cohorts_config) {
 
 run_primary_ple_pipeline <- function(cfg) {
   check_required_packages()
-  ensure_dir(cfg$output$output_folder)
+  paths <- get_output_paths(cfg$output)
 
   connection_details <- create_connection_details(cfg$connection)
 
@@ -886,39 +951,27 @@ run_primary_ple_pipeline <- function(cfg) {
     covariate_balance = matching_result$covariate_balance
   )
 
-  save_analysis_outputs(
-    output_folder = cfg$output$output_folder,
-    analysis_summary = analysis_summary,
-    matching_summary = matching_summary,
-    study_population = study_population,
+  pipeline_artifacts <- list(
     adjusted_population = matching_result$matched_population,
     covariate_balance = matching_result$covariate_balance,
-    screening_log = ps_fit$screening$screening_log,
-    ps_model_coefficients = ps_fit$ps_model_coefficients
+    caliper_used = matching_result$caliper_used,
+    outcome_model = outcome_model,
+    analysis_summary = analysis_summary,
+    matching_summary = matching_summary
   )
 
-  saveRDS(
-    list(
-      cm_data = cm_data,
-      study_population = study_population,
-      ps = ps_fit$ps,
-      screening = ps_fit$screening,
-      adjusted_population = matching_result$matched_population,
-      covariate_balance = matching_result$covariate_balance,
-      caliper_used = matching_result$caliper_used,
-      outcome_model = outcome_model,
-      analysis_summary = analysis_summary,
-      matching_summary = matching_summary
-    ),
-    file.path(cfg$output$output_folder, "pipeline_artifacts.rds")
+  save_analysis_outputs(
+    output_config = cfg$output,
+    analysis_summary = analysis_summary,
+    matching_summary = matching_summary,
+    adjusted_population = matching_result$matched_population,
+    covariate_balance = matching_result$covariate_balance,
+    ps_model_coefficients = ps_fit$ps_model_coefficients,
+    pipeline_artifacts = pipeline_artifacts
   )
 
   invisible(
     list(
-      cm_data = cm_data,
-      study_population = study_population,
-      ps = ps_fit$ps,
-      screening = ps_fit$screening,
       adjusted_population = matching_result$matched_population,
       covariate_balance = matching_result$covariate_balance,
       caliper_used = matching_result$caliper_used,

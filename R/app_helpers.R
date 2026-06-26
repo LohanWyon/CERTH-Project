@@ -1,8 +1,4 @@
 # R/app_helpers.R
-# Purpose: Build and normalize app configuration inputs for the PLE pipeline.
-# Notes:
-# - Handles input normalization, cohort JSON management, and runtime config assembly.
-# - Keeps Shiny-side config building separate from pipeline execution logic.
 
 parse_csv_ids <- function(x) {
   x <- trimws(unlist(strsplit(as.character(x), ",")))
@@ -277,13 +273,13 @@ build_study_population_config <- function() {
   )
 }
 
-build_covariate_screening_config <- function() {
+build_covariate_screening_config <- function(input) {
   list(
-    enabled = TRUE,
-    number_of_runs = 5,
+    enabled = isTRUE(input$screening_enabled),
+    number_of_runs = as.integer(input$screening_number_of_runs %||% 5),
     sample_fraction = 0.05,
-    min_subjects_per_group = 500,
-    top_covariates_per_run = 1000,
+    min_subjects_per_group = as.integer(input$screening_min_subjects_per_group %||% 500),
+    top_covariates_per_run = as.integer(input$screening_top_covariates_per_run %||% 1000),
     seed = 20260619,
     include_forced_covariates = FALSE,
     forced_covariates_source = NULL,
@@ -304,32 +300,34 @@ build_ps_model_config <- function() {
   )
 }
 
-build_adjustment_config <- function() {
+build_adjustment_config <- function(input) {
   list(
     method = "matching",
     match_ratio = 1,
-    caliper = 0.2,
+    caliper = as.numeric(input$matching_caliper %||% 0.2),
     caliper_scale = "sd_logit_ps",
-    allow_caliper_adaptation = TRUE,
-    caliper_if_low_match_rate = 0.25,
-    low_match_rate_threshold = 0.25,
-    caliper_if_poor_balance = 0.15,
-    high_match_rate_threshold = 0.90,
-    poor_balance_threshold = 0.10,
-    use_trimming = FALSE,
+    allow_caliper_adaptation = isTRUE(input$matching_allow_caliper_adaptation),
+    caliper_if_low_match_rate = as.numeric(input$matching_caliper_if_low_match_rate %||% 0.25),
+    low_match_rate_threshold = as.numeric(input$matching_low_match_rate_threshold %||% 0.25),
+    caliper_if_poor_balance = as.numeric(input$matching_caliper_if_poor_balance %||% 0.15),
+    high_match_rate_threshold = as.numeric(input$matching_high_match_rate_threshold %||% 0.90),
+    poor_balance_threshold = as.numeric(input$matching_poor_balance_threshold %||% 0.10),
+    use_trimming = isTRUE(input$trimming_enabled),
     trimming_rule = "common_support_percentile",
-    trimming_lower_percentile = 0.01,
-    trimming_upper_percentile = 0.99,
+    trimming_lower_percentile = as.numeric(input$trimming_lower_percentile %||% 0.01),
+    trimming_upper_percentile = as.numeric(input$trimming_upper_percentile %||% 0.99),
     trim_only_if_clear_non_overlap = TRUE
   )
 }
 
-build_outcome_model_config <- function() {
+build_outcome_model_config <- function(input) {
   list(
     model_type = "cox",
     stratified = TRUE,
     include_covariates = FALSE,
-    estimand = "att"
+    estimand = "att",
+    prior_variance = as.numeric(input$outcome_prior_variance %||% 2),
+    use_cross_validation = isTRUE(input$outcome_use_cross_validation)
   )
 }
 
@@ -342,7 +340,12 @@ build_runtime_config <- function(input) {
 
   list(
     output_folder = output_folder,
-    save_intermediate_rds = TRUE,
+    final_output_folder = output_folder,
+    dev_output_folder = file.path(output_folder, "dev"),
+    debug_output_folder = file.path(output_folder, "debug"),
+    save_final_results = TRUE,
+    save_dev_files = isTRUE(input$save_dev_files),
+    save_debug_files = isTRUE(input$save_debug_files),
     verbose = TRUE
   )
 }
@@ -353,10 +356,10 @@ build_config_from_input <- function(input, connection_info) {
     cohorts = build_cohorts_config(input, connection_info),
     cm_data = build_cm_data_config(input, connection_info),
     study_population = build_study_population_config(),
-    covariate_screening = build_covariate_screening_config(),
+    covariate_screening = build_covariate_screening_config(input),
     ps_model = build_ps_model_config(),
-    adjustment = build_adjustment_config(),
-    outcome_model = build_outcome_model_config(),
+    adjustment = build_adjustment_config(input),
+    outcome_model = build_outcome_model_config(input),
     output = build_runtime_config(input)
   )
 }
