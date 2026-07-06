@@ -1,58 +1,68 @@
 coefficient,covariateId,covariateName,abs_coefficient
--2.2235537410090656,1150871413,drug_era group (DrugGroupEraOverlapping) during day 0 through 0 days relative to index: Misoprostol,2.2235537410090656
--0.16925042421178615,376961210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Disturbance of consciousness,0.16925042421178615
--0.15889866432628189,443597210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Chronic kidney disease stage 3,0.15889866432628189
--0.1547327922837869,138255210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Abnormal cardiovascular function,0.1547327922837869
--0.11788057384701324,439926210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Malaise and fatigue,0.11788057384701324
-0.07941410271071338,77670210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Chest pain,0.07941410271071338
--0.07866908979421618,140214210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Eruption,0.07866908979421618
-0.06728946758412492,77670212,condition_era group (ConditionGroupEraShortTerm) during day -30 through 0 days relative to index: Chest pain,0.06728946758412492
--0.06623466947294757,375527210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Headache disorder,0.06623466947294757
-0.06594721167438593,708298410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Midazolam,0.06594721167438593
-0.0629408487607348,2108115502,procedure_occurrence during day -365 through 0 days relative to index: Unknown concept,0.0629408487607348
-0.05792626365346376,80493210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Ankylosis of joint,0.05792626365346376
-0.056158888694644415,134736210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Backache,0.056158888694644415
--0.05521138380151321,903963410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Triamcinolone,0.05521138380151321
--0.05383265731348178,970250410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Spironolactone,0.05383265731348178
--0.051288923207624786,733008410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Perphenazine,0.051288923207624786
--0.04964561935495334,436659210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Iron deficiency anemia,0.04964561935495334
--0.0466439399954464,942350410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: torsemide,0.0466439399954464
--0.04388728479609285,432545210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Bacterial infectious disease,0.04388728479609285
--0.04088753381994641,1545958410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: atorvastatin,0.04088753381994641
--0.040428408793908896,1150871410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Misoprostol,0.040428408793908896
-0.04011499818650694,924724410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Dicyclomine,0.04011499818650694
--0.039888687545556606,75897210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Polyarthropathy,0.039888687545556606
--0.03984901726493955,1308842410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: valsartan,0.03984901726493955
--0.0386406732837205,2001200502,"procedure_occurrence during day -365 through 0 days relative to index: Biopsy of mouth, unspecified structure",0.0386406732837205
--0.03682976156027968,435506210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Benign neoplastic disease,0.03682976156027968
--0.036065528339900954,192359210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Renal failure syndrome,0.036065528339900954
--0.03507146954924319,1314002410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Atenolol,0.03507146954924319
--0.03189145089004343,138102210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Benign neoplasm of skin,0.03189145089004343
-0.029454667872794365,1501700412,drug_era group (DrugGroupEraShortTerm) during day -30 through 0 days relative to index: levothyroxine,0.029454667872794365
--0.02930213037531921,1125315412,drug_era group (DrugGroupEraShortTerm) during day -30 through 0 days relative to index: Acetaminophen,0.02930213037531921
--0.029006049858567345,75617210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Degenerative joint disease involving multiple joints,0.029006049858567345
-0.028068749475046232,80189210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Displacement of lumbar intervertebral disc without myelopathy,0.028068749475046232
--0.026922597280609147,201131210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Pelvic mass,0.026922597280609147
-0.02595988897842011,432867210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Hyperlipidemia,0.02595988897842011
--0.025435228079008596,1373928410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Hydralazine,0.025435228079008596
--0.02499562962748995,378416210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Retinal disorder,0.02499562962748995
--0.02391119419736924,381591210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Cerebrovascular disease,0.02391119419736924
--0.022470016188638458,2003877502,procedure_occurrence during day -365 through 0 days relative to index: Other repair of urethra,0.022470016188638458
-0.021677869992210556,77079210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Spinal stenosis,0.021677869992210556
-0.021664895394820145,437827210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Pure hypercholesterolemia,0.021664895394820145
-0.019977201280957417,434621210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Autoimmune disease,0.019977201280957417
--0.019366996427651082,201826210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Type 2 diabetes mellitus,0.019366996427651082
--0.016010453316929626,444031210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Chronic heart failure,0.016010453316929626
--0.014799834387475534,1154332410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Pseudoephedrine,0.014799834387475534
--0.013462936529455063,198124210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Kidney disease,0.013462936529455063
--0.01267071284193134,734354410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: pregabalin,0.01267071284193134
--0.011013042846798736,1318853410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Nifedipine,0.011013042846798736
--0.009307880548787778,444206210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Arthropathy of pelvis,0.009307880548787778
--0.00871471468479834,1307863410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Verapamil,0.00871471468479834
-0.004761249790748428,432870210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Thrombocytopenic disorder,0.004761249790748428
-0.004186082660312431,703547410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Trazodone,0.004186082660312431
--0.003881229388831724,138825210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Actinic keratosis,0.003881229388831724
--0.0023686258892447985,2102077502,procedure_occurrence during day -365 through 0 days relative to index: Unknown concept,0.0023686258892447985
--0.0013128068924908552,441284210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Open-angle glaucoma,0.0013128068924908552
--6.519686413736061e-4,1305447410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Methyldopa,6.519686413736061e-4
+-2.406682972387164,1150871413,drug_era group (DrugGroupEraOverlapping) during day 0 through 0 days relative to index: Misoprostol,2.406682972387164
+-0.19111501706521553,443597210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Chronic kidney disease stage 3,0.19111501706521553
+-0.17822834901984563,138255210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Abnormal cardiovascular function,0.17822834901984563
+-0.13161294374105972,439926210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Malaise and fatigue,0.13161294374105972
+-0.11866086378193845,140214210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Eruption,0.11866086378193845
+0.1113332431927392,708298410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Midazolam,0.1113332431927392
+0.1019620403607635,77670212,condition_era group (ConditionGroupEraShortTerm) during day -30 through 0 days relative to index: Chest pain,0.1019620403607635
+-0.09757738168240614,375527210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Headache disorder,0.09757738168240614
+0.0928354167482072,77670210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Chest pain,0.0928354167482072
+0.08902917123147837,2108115502,procedure_occurrence during day -365 through 0 days relative to index: Unknown concept,0.08902917123147837
+0.08138743018105289,924724410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Dicyclomine,0.08138743018105289
+0.07906326396479871,134736210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Backache,0.07906326396479871
+-0.07661137996242567,436659210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Iron deficiency anemia,0.07661137996242567
+-0.07500522394104785,903963410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Triamcinolone,0.07500522394104785
+0.07278583559040978,80189210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Displacement of lumbar intervertebral disc without myelopathy,0.07278583559040978
+-0.07238980755397105,970250410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Spironolactone,0.07238980755397105
+-0.06964099844619989,75897210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Polyarthropathy,0.06964099844619989
+-0.06952684595067969,733008410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Perphenazine,0.06952684595067969
+0.06931619556414884,315286212,condition_era group (ConditionGroupEraShortTerm) during day -30 through 0 days relative to index: Chronic ischemic heart disease,0.06931619556414884
+-0.061601526633436994,432545210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Bacterial infectious disease,0.061601526633436994
+-0.06061736200575524,1373928410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Hydralazine,0.06061736200575524
+0.05199782864714087,77079210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Spinal stenosis,0.05199782864714087
+-0.051913475146371874,2003877502,procedure_occurrence during day -365 through 0 days relative to index: Other repair of urethra,0.051913475146371874
+-0.05044049278894501,316139212,condition_era group (ConditionGroupEraShortTerm) during day -30 through 0 days relative to index: Heart failure,0.05044049278894501
+0.04901445333127115,432870210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Thrombocytopenic disorder,0.04901445333127115
+0.04860109323103829,1501700412,drug_era group (DrugGroupEraShortTerm) during day -30 through 0 days relative to index: levothyroxine,0.04860109323103829
+-0.047034810903436676,1314002410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Atenolol,0.047034810903436676
+0.04667710707014775,1328165413,drug_era group (DrugGroupEraOverlapping) during day 0 through 0 days relative to index: Diltiazem,0.04667710707014775
+-0.04588707725711914,1150871410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Misoprostol,0.04588707725711914
+-0.04579621787796722,1125315412,drug_era group (DrugGroupEraShortTerm) during day -30 through 0 days relative to index: Acetaminophen,0.04579621787796722
+0.04509067665320122,432867210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Hyperlipidemia,0.04509067665320122
+-0.04414390681290466,381591210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Cerebrovascular disease,0.04414390681290466
+-0.039820717113235704,435506210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Benign neoplastic disease,0.039820717113235704
+-0.03925117604382574,378416210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Retinal disorder,0.03925117604382574
+-0.03879820386904373,201826210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Type 2 diabetes mellitus,0.03879820386904373
+-0.038431397779662486,734354410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: pregabalin,0.038431397779662486
+-0.03694827623089234,442105210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Benign neoplasm of soft tissue,0.03694827623089234
+0.034559898248449863,723013410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Diazepam,0.034559898248449863
+0.03410472053437302,703547410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Trazodone,0.03410472053437302
+-0.02940171039744567,198124210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Kidney disease,0.02940171039744567
+-0.027133085916082236,441284210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Open-angle glaucoma,0.027133085916082236
+-0.02526242331351883,1307863410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Verapamil,0.02526242331351883
+-0.0239656574092287,745268410,"drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: ergoloid mesylates, USP",0.0239656574092287
+-0.023356447689708126,1318853410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Nifedipine,0.023356447689708126
+-0.0216408518777793,444206210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Arthropathy of pelvis,0.0216408518777793
+0.02039480026867641,437827210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Pure hypercholesterolemia,0.02039480026867641
+-0.019632550283006873,192438210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Abdominal mass,0.019632550283006873
+-0.017110724662317806,432883210,"condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Recurrent major depressive episodes, moderate",0.017110724662317806
+-0.016701938535765785,2002290502,procedure_occurrence during day -365 through 0 days relative to index: Biopsy of lymphatic structure,0.016701938535765785
+-0.016468551134236134,2001285502,procedure_occurrence during day -365 through 0 days relative to index: Temporary tracheostomy,0.016468551134236134
+-0.0162144272090028,2010006,index year: 2010,0.0162144272090028
+0.010681496036137647,4007,index month: 4,0.010681496036137647
+-0.009749150110251126,1592085410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Lovastatin,0.009749150110251126
+-0.009074872939373323,8507001,gender = MALE,0.009074872939373323
+0.009054947400801526,755695410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Fluoxetine,0.009054947400801526
+-0.007381625912769335,376065210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Neurological disorder with diabetes type 2,0.007381625912769335
+-0.006914989594822251,257004210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Acute exacerbation of chronic obstructive airways disease,0.006914989594822251
+-0.006839726615293758,444252210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Neuritis,0.006839726615293758
+-0.005826888407091716,2005237502,"procedure_occurrence during day -365 through 0 days relative to index: Limb shortening procedures, radius and ulna",0.005826888407091716
+0.003946276385733683,321588210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Heart disease,0.003946276385733683
+-0.0037250635196630307,2009006,index year: 2009,0.0037250635196630307
+-0.0037066058244636965,138525210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Pain in limb,0.0037066058244636965
+0.002968522746151195,78517210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Multiple joint pain,0.002968522746151195
+0.0021673602792954163,1115008410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Naproxen,0.0021673602792954163
+0.001760821196845514,1114220410,drug_era group (DrugGroupEraLongTerm) during day -365 through 0 days relative to index: Naloxone,0.001760821196845514
+6.109033848074799e-4,312349210,condition_era group (ConditionGroupEraLongTerm) during day -365 through 0 days relative to index: Venous varices,6.109033848074799e-4
 NA,NA,NA,NA

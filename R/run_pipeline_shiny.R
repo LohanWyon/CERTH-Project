@@ -548,7 +548,7 @@ fit_ps_model <- function(population,
   }
 
   message(
-    "[custom fit_ps_model] Auto-excluded covariate IDs: ",
+    "Auto-excluded covariate IDs: ",
     if (length(auto_excluded_covariate_ids) == 0) "<none>" else paste(auto_excluded_covariate_ids, collapse = ", ")
   )
 
@@ -582,8 +582,9 @@ fit_ps_model <- function(population,
     final_exclude_ids <- final_exclude_ids[!is.na(final_exclude_ids)]
   }
 
-  message("[fit_ps_model] final include covariate count: ", length(final_include_ids))
-  
+  message("Final include covariate count: ", length(final_include_ids))
+  message("Final exclude covariate count: ", length(final_exclude_ids))
+
   ps_args <- CohortMethod::createCreatePsArgs(
     maxCohortSizeForFitting = ps_model_config$max_cohort_size_for_fitting,
     errorOnHighCorrelation = TRUE,

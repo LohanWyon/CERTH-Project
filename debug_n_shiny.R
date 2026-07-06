@@ -16,7 +16,7 @@ connection_info <- list(
   connection_mode = "demo",
   dbms = "duckdb",
   source_label = "Eunomia demo database",
-  source_path = CDMConnector::eunomiaDir(),
+  source_path = CDMConnector::eunomiaDir(datasetName = "synpuf-110k"),
   server = NA_character_,
   port = NA_character_,
   user = NA_character_,
@@ -24,8 +24,6 @@ connection_info <- list(
   oracle_temp_schema = NA_character_
 )
 
-# Simuler les valeurs d'input que tu as dans l’app
-# (tu peux adapter si tu as changé qqch dans l’UI)
 fake_input <- list(
   generate_cohorts_from_json = TRUE,
   cohort_json_folder = "cohorts_json",
@@ -38,7 +36,32 @@ fake_input <- list(
   cohort_table = "cohort",
   study_start_date = "",
   study_end_date = "",
-  outcome_cohort_ids = ""
+  outcome_cohort_ids = "",
+
+  screening_enabled = TRUE,
+  screening_number_of_runs = 3,
+  screening_top_covariates_per_run = 300,
+  screening_min_subjects_per_group = 500,
+
+  matching_caliper = 0.2,
+  matching_allow_caliper_adaptation = TRUE,
+  matching_low_match_rate_threshold = 0.25,
+  matching_caliper_if_low_match_rate = 0.25,
+  matching_high_match_rate_threshold = 0.90,
+  matching_poor_balance_threshold = 0.10,
+  matching_caliper_if_poor_balance = 0.15,
+
+  trimming_enabled = TRUE,
+  trimming_lower_percentile = 0.02,
+  trimming_upper_percentile = 0.98,
+
+  outcome_prior_variance = 2,
+  outcome_use_cross_validation = FALSE,
+
+  save_dev_files = FALSE,
+  save_debug_files = FALSE,
+
+  use_demo_connection = TRUE
 )
 
 cfg <- build_config_from_input(
