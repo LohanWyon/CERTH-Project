@@ -1,2 +1,2 @@
 treated_before_matching,comparator_before_matching,treated_after_matching,comparator_after_matching,treated_match_fraction,comparator_match_fraction,max_abs_smd_after,pct_covariates_abs_smd_gt_0_1_after
-2182,10379,2177,2177,0.9977085242896425,0.20975045765488004,NA,NA
+2182,10379,2182,2182,1,0.2102321996338761,NA,NA

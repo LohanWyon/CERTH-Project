@@ -95,3 +95,10 @@ nrow(population_sub) after rowId match =  12561
 Using analysis_id_filter; length(keep_ids) =  7966 
 length(covariate_ids) =  7966 
 nrow(out_all) =  7966  ; nrow(out_sel) =  6 
+nrow(covariates_df) =  5073564 
+nrow(covariates_df) after NA filter =  5073564 
+nrow(population_sub) initial =  12561 
+nrow(population_sub) after rowId match =  12561 
+Using analysis_id_filter; length(keep_ids) =  7966 
+length(covariate_ids) =  7966 
+nrow(out_all) =  7966  ; nrow(out_sel) =  6 

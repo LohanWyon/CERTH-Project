@@ -1,2 +1,2 @@
 target_cohort_id,comparator_cohort_id,primary_outcome_cohort_id,treated_count_before_matching,comparator_count_before_matching,treated_count_after_matching,comparator_count_after_matching,selected_covariates_count,caliper_used,hazard_ratio,ci_95_lower,ci_95_upper,se_log_hazard_ratio,p_value
-1,2,3,2182,10379,2177,2177,670,0.2,1.1374999999999882,0.842710176807346,1.5383968931200989,0.15354187126196658,0.4014282245994931
+1,2,3,2182,10379,2182,2182,2787,0.2,1.2098765432098715,0.9023538082395142,1.626822970559445,0.15035419194298374,0.20510877030947228

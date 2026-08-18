@@ -224,7 +224,6 @@ build_covariate_choice_labels <- function(catalog_df) {
     ids[i] <- as.character(cov_id)
   }
 
-  # Ajouter une option vide au début
   all_labels <- c("", labels)
   all_ids <- c("", ids)
   
@@ -614,4 +613,74 @@ get_descendant_concept_ids <- function(connection, cdm_database_schema, concept_
 
   result <- DatabaseConnector::querySql(connection, query)
   unique(as.integer(result[[1]]))
+}
+
+get_concept_ancestors <- function(connection, concept_id, cdm_schema = "main") {
+  if (is.na(concept_id) || is.null(concept_id) || concept_id == 0) {
+    return(data.frame(
+      ancestor_concept_id = numeric(0),
+      min_levels_of_separation = numeric(0),
+      stringsAsFactors = FALSE
+    ))
+  }
+  
+  query <- sprintf(
+    "SELECT ca.ancestor_concept_id, ca.min_levels_of_separation
+     FROM %s.concept_ancestor ca
+     WHERE ca.descendant_concept_id = %d
+       AND ca.min_levels_of_separation > 0
+     ORDER BY ca.min_levels_of_separation ASC, ca.ancestor_concept_id ASC",
+    cdm_schema, as.integer(concept_id)
+  )
+  
+  DatabaseConnector::querySql(connection, query)
+}
+
+get_all_descendants_of_ancestor <- function(connection, ancestor_concept_id, cdm_schema = "main") {
+  if (is.na(ancestor_concept_id) || is.null(ancestor_concept_id) || ancestor_concept_id == 0) {
+    return(numeric(0))
+  }
+  
+  query <- sprintf(
+    "SELECT DISTINCT descendant_concept_id
+     FROM %s.concept_ancestor
+     WHERE ancestor_concept_id = %d",
+    cdm_schema, as.integer(ancestor_concept_id)
+  )
+  
+  descendants <- DatabaseConnector::querySql(connection, query)
+  unique(descendants$descendant_concept_id)
+}
+
+get_ancestor_names_from_catalog <- function(catalog_df, ancestor_ids) {
+  if (is.null(catalog_df) || nrow(catalog_df) == 0 || is.null(ancestor_ids) || length(ancestor_ids) == 0) {
+    return(data.frame(
+      ancestor_concept_id = ancestor_ids,
+      ancestor_concept_name = as.character(ancestor_ids),
+      stringsAsFactors = FALSE
+    ))
+  }
+  
+  ancestor_ids <- unique(as.numeric(ancestor_ids))
+  ancestor_ids <- ancestor_ids[!is.na(ancestor_ids)]
+  
+  result <- data.frame(
+    ancestor_concept_id = ancestor_ids,
+    ancestor_concept_name = as.character(ancestor_ids),
+    stringsAsFactors = FALSE
+  )
+  
+  for (i in seq_len(nrow(result))) {
+    cid <- result$ancestor_concept_id[i]
+    matches <- catalog_df[catalog_df$conceptId == cid, , drop = FALSE]
+    
+    if (nrow(matches) > 0) {
+      name <- matches$covariateName[1]
+      if (!is.na(name) && nzchar(trimws(name))) {
+        result$ancestor_concept_name[i] <- trimws(name)
+      }
+    }
+  }
+  
+  result
 }
