@@ -1,5 +1,9 @@
 # R/app_helpers.R
 
+`%||%` <- function(x, y) {
+  if (is.null(x) || length(x) == 0) y else x
+}
+
 parse_csv_ids <- function(x) {
   x <- trimws(unlist(strsplit(as.character(x), ",")))
   x <- x[nzchar(x)]
@@ -143,6 +147,216 @@ default_auto_cohort_ids <- function() {
   )
 }
 
+deduplicate_covariate_catalog <- function(x) {
+  if (is.null(x) || !is.data.frame(x) || nrow(x) == 0) {
+    return(data.frame(
+      covariateId = numeric(0),
+      covariateName = character(0),
+      analysisId = numeric(0),
+      conceptId = numeric(0),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  keep_cols <- intersect(
+    c("covariateId", "covariateName", "analysisId", "conceptId"),
+    names(x)
+  )
+
+  x <- x[, keep_cols, drop = FALSE]
+
+  if (!("covariateId" %in% names(x))) {
+    x$covariateId <- NA_real_
+  }
+
+  if (!("covariateName" %in% names(x))) {
+    x$covariateName <- NA_character_
+  }
+
+  if (!("analysisId" %in% names(x))) {
+    x$analysisId <- NA_real_
+  }
+
+  if (!("conceptId" %in% names(x))) {
+    x$conceptId <- NA_real_
+  }
+
+  x$covariateId <- suppressWarnings(as.numeric(x$covariateId))
+  x$analysisId <- suppressWarnings(as.numeric(x$analysisId))
+  x$conceptId <- suppressWarnings(as.numeric(x$conceptId))
+  x$covariateName <- as.character(x$covariateName)
+
+  x <- x[!is.na(x$covariateId), , drop = FALSE]
+  x <- x[order(x$covariateName, x$covariateId), , drop = FALSE]
+  x <- x[!duplicated(x$covariateId), , drop = FALSE]
+  rownames(x) <- NULL
+  x
+}
+
+build_covariate_choice_labels <- function(catalog_df) {
+  if (is.null(catalog_df) || !is.data.frame(catalog_df) || nrow(catalog_df) == 0) {
+    return(setNames(character(0), character(0)))
+  }
+
+  labels <- character(nrow(catalog_df))
+  ids <- character(nrow(catalog_df))
+
+  for (i in seq_len(nrow(catalog_df))) {
+    cov_name <- catalog_df$covariateName[i]
+    cov_id <- catalog_df$covariateId[i]
+    concept_id <- catalog_df$conceptId[i]
+
+    if (is.na(cov_name) || !nzchar(cov_name)) {
+      cov_name <- paste0("Covariate ", cov_id)
+    }
+
+    if (is.na(concept_id)) {
+      concept_str <- "NA"
+    } else {
+      concept_str <- as.character(concept_id)
+    }
+
+    labels[i] <- paste0(
+      cov_name,
+      " [covariateId: ", cov_id,
+      ", conceptId: ", concept_str, "]"
+    )
+    ids[i] <- as.character(cov_id)
+  }
+
+  # Ajouter une option vide au début
+  all_labels <- c("", labels)
+  all_ids <- c("", ids)
+  
+  stats::setNames(all_ids, all_labels)
+}
+
+find_covariate_catalog_row <- function(catalog_df, covariate_id) {
+  if (is.null(catalog_df) || !is.data.frame(catalog_df) || nrow(catalog_df) == 0) {
+    return(NULL)
+  }
+
+  covariate_id <- suppressWarnings(as.numeric(covariate_id))
+  if (is.na(covariate_id)) {
+    return(NULL)
+  }
+
+  hits <- catalog_df[catalog_df$covariateId == covariate_id, , drop = FALSE]
+  if (nrow(hits) == 0) {
+    return(NULL)
+  }
+
+  hits[1, , drop = FALSE]
+}
+
+expand_covariate_with_subcovariates <- function(catalog_df, selected_covariate_id) {
+  selected_row <- find_covariate_catalog_row(catalog_df, selected_covariate_id)
+
+  if (is.null(selected_row)) {
+    return(integer(0))
+  }
+
+  analysis_id <- suppressWarnings(as.numeric(selected_row$analysisId[[1]]))
+  concept_id <- suppressWarnings(as.numeric(selected_row$conceptId[[1]]))
+
+  if (!is.na(analysis_id) &&
+      !is.na(concept_id) &&
+      "analysisId" %in% names(catalog_df) &&
+      "conceptId" %in% names(catalog_df)) {
+    matched_ids <- catalog_df$covariateId[
+      catalog_df$analysisId == analysis_id &
+        catalog_df$conceptId == concept_id
+    ]
+    matched_ids <- unique(as.integer(matched_ids))
+    matched_ids <- matched_ids[!is.na(matched_ids)]
+
+    if (length(matched_ids) > 0) {
+      return(sort(matched_ids))
+    }
+  }
+
+  as.integer(selected_row$covariateId[[1]])
+}
+
+expand_covariates_from_concept_id <- function(catalog_df, selected_covariate_id) {
+  selected_row <- find_covariate_catalog_row(catalog_df, selected_covariate_id)
+
+  if (is.null(selected_row)) {
+    return(integer(0))
+  }
+
+  concept_id <- suppressWarnings(as.numeric(selected_row$conceptId[[1]]))
+
+  if (is.na(concept_id) || !("conceptId" %in% names(catalog_df))) {
+    return(as.integer(selected_row$covariateId[[1]]))
+  }
+
+  matched_ids <- catalog_df$covariateId[!is.na(catalog_df$conceptId) & catalog_df$conceptId == concept_id]
+  matched_ids <- unique(as.integer(matched_ids))
+  matched_ids <- matched_ids[!is.na(matched_ids)]
+
+  if (length(matched_ids) == 0) {
+    return(as.integer(selected_row$covariateId[[1]]))
+  }
+
+  sort(matched_ids)
+}
+
+expand_covariates_from_descendant_concepts <- function(catalog_df, selected_covariate_id, descendant_concept_ids) {
+  if (is.null(catalog_df) || nrow(catalog_df) == 0) {
+    return(integer(0))
+  }
+
+  if (is.null(descendant_concept_ids) || length(descendant_concept_ids) == 0) {
+    return(integer(0))
+  }
+
+  matching_ids <- catalog_df$covariateId[!is.na(catalog_df$conceptId) & catalog_df$conceptId %in% descendant_concept_ids]
+  matching_ids <- unique(as.integer(matching_ids))
+  matching_ids <- matching_ids[!is.na(matching_ids)]
+
+  if (length(matching_ids) == 0) {
+    return(as.integer(selected_covariate_id))
+  }
+
+  sort(matching_ids)
+}
+
+build_selected_covariates_table <- function(selected_ids, catalog_df) {
+  selected_ids <- unique(suppressWarnings(as.integer(selected_ids)))
+  selected_ids <- selected_ids[!is.na(selected_ids)]
+
+  if (length(selected_ids) == 0) {
+    return(data.frame(
+      covariateId = integer(0),
+      covariateName = character(0),
+      analysisId = integer(0),
+      conceptId = integer(0),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  out <- catalog_df[catalog_df$covariateId %in% selected_ids, , drop = FALSE]
+
+  missing_ids <- setdiff(selected_ids, out$covariateId)
+  if (length(missing_ids) > 0) {
+    out <- rbind(
+      out,
+      data.frame(
+        covariateId = missing_ids,
+        covariateName = paste0("Covariate ", missing_ids),
+        analysisId = NA_integer_,
+        conceptId = NA_integer_,
+        stringsAsFactors = FALSE
+      )
+    )
+  }
+
+  out <- out[match(selected_ids, out$covariateId), , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
 build_connection_config <- function(connection_info) {
   if (identical(connection_info$connection_mode, "demo")) {
     return(list(
@@ -273,7 +487,15 @@ build_study_population_config <- function() {
   )
 }
 
-build_covariate_screening_config <- function(input) {
+build_covariate_screening_config <- function(input,
+                                            forced_covariate_ids = integer(0),
+                                            excluded_covariate_ids = integer(0)) {
+  forced_covariate_ids <- unique(suppressWarnings(as.integer(forced_covariate_ids)))
+  forced_covariate_ids <- forced_covariate_ids[!is.na(forced_covariate_ids)]
+
+  excluded_covariate_ids <- unique(suppressWarnings(as.integer(excluded_covariate_ids)))
+  excluded_covariate_ids <- excluded_covariate_ids[!is.na(excluded_covariate_ids)]
+
   list(
     enabled = isTRUE(input$screening_enabled),
     number_of_runs = as.integer(input$screening_number_of_runs %||% 5),
@@ -281,10 +503,10 @@ build_covariate_screening_config <- function(input) {
     min_subjects_per_group = as.integer(input$screening_min_subjects_per_group %||% 500),
     top_covariates_per_run = as.integer(input$screening_top_covariates_per_run %||% 1000),
     seed = 20260619,
-    include_forced_covariates = FALSE,
-    forced_covariates_source = NULL,
-    exclude_artefactual_covariates = FALSE,
-    excluded_covariates_source = NULL,
+    include_forced_covariates = length(forced_covariate_ids) > 0,
+    forced_covariate_ids = forced_covariate_ids,
+    exclude_artefactual_covariates = length(excluded_covariate_ids) > 0,
+    excluded_covariate_ids = excluded_covariate_ids,
     auto_exclude_high_correlation_covariates = TRUE,
     high_correlation_threshold = 0.999
   )
@@ -350,16 +572,46 @@ build_runtime_config <- function(input) {
   )
 }
 
-build_config_from_input <- function(input, connection_info) {
+build_config_from_input <- function(input,
+                                    connection_info,
+                                    forced_covariate_ids = integer(0),
+                                    excluded_covariate_ids = integer(0)) {
   list(
     connection = build_connection_config(connection_info),
     cohorts = build_cohorts_config(input, connection_info),
     cm_data = build_cm_data_config(input, connection_info),
     study_population = build_study_population_config(),
-    covariate_screening = build_covariate_screening_config(input),
+    covariate_screening = build_covariate_screening_config(
+      input = input,
+      forced_covariate_ids = forced_covariate_ids,
+      excluded_covariate_ids = excluded_covariate_ids
+    ),
     ps_model = build_ps_model_config(),
     adjustment = build_adjustment_config(input),
     outcome_model = build_outcome_model_config(input),
     output = build_runtime_config(input)
   )
+}
+
+get_descendant_concept_ids <- function(connection, cdm_database_schema, concept_id, include_self = FALSE) {
+  if (is.na(concept_id) || is.null(concept_id) || concept_id == 0) {
+    return(integer(0))
+  }
+
+  if (include_self) {
+    query <- sprintf(
+      "SELECT DISTINCT descendant_concept_id FROM %s.concept_ancestor WHERE ancestor_concept_id = %d",
+      cdm_database_schema,
+      as.integer(concept_id)
+    )
+  } else {
+    query <- sprintf(
+      "SELECT DISTINCT descendant_concept_id FROM %s.concept_ancestor WHERE ancestor_concept_id = %d AND min_levels_of_separation > 0",
+      cdm_database_schema,
+      as.integer(concept_id)
+    )
+  }
+
+  result <- DatabaseConnector::querySql(connection, query)
+  unique(as.integer(result[[1]]))
 }

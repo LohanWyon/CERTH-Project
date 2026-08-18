@@ -5,15 +5,16 @@ library(bslib)
 library(DT)
 library(readr)
 library(plotly)
+library(dplyr)
+library(DatabaseConnector)
 library(CDMConnector)
 library(FeatureExtraction)
 library(CirceR)
-library(dplyr)
 
-source("R/app_helpers.R", local = TRUE)
-source("R/run_pipeline_shiny.R", local = TRUE)
-source("R/ui_tabs.R", local = TRUE)
-source("R/results_outputs.R", local = TRUE)
+source(file.path("R", "app_helpers.R"))
+source(file.path("R", "run_pipeline_shiny.R"))
+source(file.path("R", "ui_tabs.R"))
+source(file.path("R", "results_outputs.R"))
 
 ui <- navbarPage(
   title = "PLE Shiny App",
@@ -29,6 +30,19 @@ server <- function(input, output, session) {
   log_store <- reactiveVal("Ready.\n")
   run_state <- reactiveVal(FALSE)
   active_connection_info <- reactiveVal(NULL)
+
+  covariate_catalog <- reactiveVal(
+    data.frame(
+      covariateId = numeric(0),
+      covariateName = character(0),
+      analysisId = numeric(0),
+      conceptId = numeric(0),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  forced_covariate_ids <- reactiveVal(integer(0))
+  excluded_covariate_ids <- reactiveVal(integer(0))
 
   append_log <- function(...) {
     isolate({
@@ -142,17 +156,9 @@ server <- function(input, output, session) {
       password <- input$password
       oracle_temp_schema <- trimws(input$oracle_temp_schema)
 
-      if (identical(dbms, "")) {
-        stop("Database platform is required.")
-      }
-
-      if (identical(server, "")) {
-        stop("Server is required for a manual connection.")
-      }
-
-      if (identical(user, "")) {
-        stop("Username is required for a manual connection.")
-      }
+      if (identical(dbms, "")) stop("Database platform is required.")
+      if (identical(server, "")) stop("Server is required for a manual connection.")
+      if (identical(user, "")) stop("Username is required for a manual connection.")
 
       connection_info <- list(
         connection_mode = "manual",
@@ -172,8 +178,397 @@ server <- function(input, output, session) {
     invisible(connection_info)
   }
 
+  create_db_connection <- function(connection_info) {
+    if (identical(connection_info$connection_mode, "demo")) {
+      details <- DatabaseConnector::createConnectionDetails(
+        dbms = connection_info$dbms,
+        server = connection_info$source_path
+      )
+    } else {
+      details <- DatabaseConnector::createConnectionDetails(
+        dbms = connection_info$dbms,
+        server = connection_info$server,
+        user = connection_info$user,
+        password = connection_info$password,
+        port = connection_info$port
+      )
+    }
+
+    DatabaseConnector::connect(details)
+  }
+
+  cohort_table_exists <- function(connection, cohort_database_schema, cohort_table) {
+    cohort_check_sql <- sprintf(
+      paste(
+        "SELECT COUNT(*) AS n",
+        "FROM information_schema.tables",
+        "WHERE lower(table_schema) = lower('%s')",
+        "AND lower(table_name) = lower('%s')"
+      ),
+      cohort_database_schema,
+      cohort_table
+    )
+
+    cohort_check <- DatabaseConnector::querySql(connection, cohort_check_sql)
+    nrow(cohort_check) > 0 && as.numeric(cohort_check[1, 1]) > 0
+  }
+
+  ensure_cohort_table_ready <- function(cfg, connection_info) {
+    conn <- create_db_connection(connection_info)
+    on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
+
+    # Toujours supprimer et régénérer pour être sûr
+    drop_sql <- sprintf(
+      "DROP TABLE IF EXISTS %s.%s",
+      cfg$cohorts$cohort_database_schema,
+      cfg$cohorts$cohort_table
+    )
+
+    append_log("Dropping existing cohort table...")
+    DatabaseConnector::executeSql(conn, drop_sql)
+
+    if (!isTRUE(cfg$cohorts$generate_cohorts_from_json)) {
+      stop(
+        "Cohort generation from JSON is required but is disabled."
+      )
+    }
+
+    append_log(
+      "Generating cohorts into ",
+      cfg$cohorts$cohort_database_schema, ".", cfg$cohorts$cohort_table, " ..."
+    )
+
+    connection_details <- create_connection_details(cfg$connection)
+
+    generate_cohorts_if_requested(
+      connection_details = connection_details,
+      cohorts_config = cfg$cohorts,
+      cm_data_config = cfg$cm_data
+    )
+
+    append_log(
+      "Cohort table generated successfully: ",
+      cfg$cohorts$cohort_database_schema, ".", cfg$cohorts$cohort_table
+    )
+
+    invisible(TRUE)
+  }
+
+  update_covariate_picker_choices <- function() {
+    catalog <- covariate_catalog()
+
+    if (is.null(catalog) || nrow(catalog) == 0) {
+      return(invisible(NULL))
+    }
+
+    choices <- build_covariate_choice_labels(catalog)
+
+    updateSelectizeInput(
+      session,
+      inputId = "forced_covariates_search",
+      choices = choices,
+      server = TRUE,
+      selected = NULL,
+      options = list(
+        placeholder = "Search covariates by name or ID",
+        create = FALSE,
+        maxItems = 1
+      )
+    )
+
+    updateSelectizeInput(
+      session,
+      inputId = "excluded_covariates_search",
+      choices = choices,
+      server = TRUE,
+      selected = NULL,
+      options = list(
+        placeholder = "Search covariates by name or ID",
+        create = FALSE,
+        maxItems = 1
+      )
+    )
+  }
+
+  add_covariates <- function(target_rv, new_ids) {
+    new_ids <- unique(as.integer(new_ids))
+    new_ids <- new_ids[!is.na(new_ids)]
+    target_rv(sort(unique(c(target_rv(), new_ids))))
+  }
+
+  remove_selected_rows <- function(target_rv, table_input_id) {
+    selected_rows <- input[[table_input_id]]
+    if (is.null(selected_rows) || length(selected_rows) == 0) {
+      return(invisible(NULL))
+    }
+
+    current_ids <- target_rv()
+    current_table <- build_selected_covariates_table(current_ids, covariate_catalog())
+
+    rows_to_remove <- current_table$covariateId[selected_rows]
+    target_rv(setdiff(current_ids, rows_to_remove))
+    invisible(rows_to_remove)
+  }
+
   observe({
     refresh_cohort_json_choices()
+  })
+
+  observeEvent(covariate_catalog(),
+    {
+      update_covariate_picker_choices()
+    },
+    ignoreInit = TRUE,
+    ignoreNULL = FALSE
+  )
+
+  observeEvent(TRUE,
+    {
+      tryCatch(
+        {
+          connection_info <- initialize_connection()
+          append_log("Connection initialized.")
+          append_log("Connection mode: ", connection_info$connection_mode)
+          append_log("DBMS: ", connection_info$dbms)
+
+          if (identical(connection_info$connection_mode, "demo")) {
+            append_log("Demo source path: ", connection_info$source_path)
+          } else {
+            append_log("Server: ", connection_info$server)
+            append_log("Port: ", ifelse(is.na(connection_info$port), "(default)", connection_info$port))
+            append_log("User: ", connection_info$user)
+          }
+        },
+        error = function(e) {
+          append_log("Connection initialization failed: ", conditionMessage(e))
+        }
+      )
+    },
+    once = TRUE
+  )
+
+  observeEvent(input$initialize_connection, ignoreInit = TRUE, {
+    tryCatch(
+      {
+        connection_info <- initialize_connection()
+        append_log("Connection re-initialized.")
+        append_log("Connection mode: ", connection_info$connection_mode)
+        append_log("DBMS: ", connection_info$dbms)
+      },
+      error = function(e) {
+        append_log("Connection initialization failed: ", conditionMessage(e))
+      }
+    )
+  })
+
+  observeEvent(input$load_covariate_catalog, ignoreInit = TRUE, {
+    req(active_connection_info())
+
+    tryCatch(
+      {
+        append_log("Loading covariate catalog...")
+
+        cfg <- build_config_from_input(
+          input = input,
+          connection_info = active_connection_info(),
+          forced_covariate_ids = forced_covariate_ids(),
+          excluded_covariate_ids = excluded_covariate_ids()
+        )
+
+        ensure_cohort_table_ready(
+          cfg = cfg,
+          connection_info = active_connection_info()
+        )
+
+        conn <- create_db_connection(active_connection_info())
+        on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
+
+        # Charger pour toutes les cohortes (target + comparator + outcome)
+        all_cohort_ids <- unique(c(
+          cfg$cohorts$target_cohort_id,
+          cfg$cohorts$comparator_cohort_id,
+          cfg$cohorts$primary_outcome_cohort_id
+        ))
+        all_cohort_ids <- all_cohort_ids[!is.na(all_cohort_ids)]
+
+        covariate_data <- FeatureExtraction::getDbCovariateData(
+          connection = conn,
+          cdmDatabaseSchema = cfg$cm_data$cdm_database_schema,
+          cohortDatabaseSchema = cfg$cohorts$cohort_database_schema,
+          cohortTable = cfg$cohorts$cohort_table,
+          cohortIds = all_cohort_ids,
+          covariateSettings = cfg$cm_data$covariate_settings
+        )
+
+        covariate_ref <- covariate_data$covariateRef
+
+        if (is.null(covariate_ref)) {
+          stop("covariateRef is NULL")
+        }
+
+        if (!is.data.frame(covariate_ref)) {
+          covariate_ref <- as.data.frame(covariate_ref)
+        }
+
+        if (!is.data.frame(covariate_ref) || nrow(covariate_ref) == 0) {
+          stop("No covariate reference data returned for the selected cohort.")
+        }
+
+        catalog <- deduplicate_covariate_catalog(covariate_ref)
+        covariate_catalog(catalog)
+
+        append_log("Covariate catalog loaded: ", nrow(catalog), " covariates.")
+      },
+      error = function(e) {
+        append_log("Failed to load covariate catalog: ", conditionMessage(e))
+      }
+    )
+  })
+
+  observeEvent(input$forced_covariates_add, ignoreInit = TRUE, {
+    add_covariates(forced_covariate_ids, input$forced_covariates_search)
+  })
+
+  observeEvent(input$excluded_covariates_add, ignoreInit = TRUE, {
+    add_covariates(excluded_covariate_ids, input$excluded_covariates_search)
+  })
+
+  observeEvent(input$forced_covariates_add_same_concept, ignoreInit = TRUE, {
+    ids <- expand_covariates_from_concept_id(covariate_catalog(), input$forced_covariates_search)
+    add_covariates(forced_covariate_ids, ids)
+  })
+
+  observeEvent(input$excluded_covariates_add_same_concept, ignoreInit = TRUE, {
+    ids <- expand_covariates_from_concept_id(covariate_catalog(), input$excluded_covariates_search)
+    add_covariates(excluded_covariate_ids, ids)
+  })
+
+  observeEvent(input$forced_covariates_add_with_subcov, ignoreInit = TRUE, {
+    req(active_connection_info())
+    tryCatch(
+      {
+        cfg <- build_config_from_input(
+          input = input,
+          connection_info = active_connection_info(),
+          forced_covariate_ids = forced_covariate_ids(),
+          excluded_covariate_ids = excluded_covariate_ids()
+        )
+
+        selected_row <- find_covariate_catalog_row(covariate_catalog(), input$forced_covariates_search)
+        if (is.null(selected_row)) {
+          stop("No covariate selected.")
+        }
+
+        conn <- create_db_connection(active_connection_info())
+        on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
+
+        descendant_ids <- get_descendant_concept_ids(
+          connection = conn,
+          cdm_database_schema = cfg$cm_data$cdm_database_schema,
+          concept_id = selected_row$conceptId[[1]],
+          include_self = TRUE
+        )
+
+        ids <- expand_covariates_from_descendant_concepts(
+          catalog_df = covariate_catalog(),
+          selected_covariate_id = input$forced_covariates_search,
+          descendant_concept_ids = descendant_ids
+        )
+
+        add_covariates(forced_covariate_ids, ids)
+        append_log("Forced covariates: added ", length(ids), " covariates from descendant concepts.")
+      },
+      error = function(e) {
+        append_log("Forced covariates descendant expansion failed: ", conditionMessage(e))
+      }
+    )
+  })
+
+  observeEvent(input$excluded_covariates_add_with_subcov, ignoreInit = TRUE, {
+    req(active_connection_info())
+    tryCatch(
+      {
+        cfg <- build_config_from_input(
+          input = input,
+          connection_info = active_connection_info(),
+          forced_covariate_ids = forced_covariate_ids(),
+          excluded_covariate_ids = excluded_covariate_ids()
+        )
+
+        selected_row <- find_covariate_catalog_row(covariate_catalog(), input$excluded_covariates_search)
+        if (is.null(selected_row)) {
+          stop("No covariate selected.")
+        }
+
+        conn <- create_db_connection(active_connection_info())
+        on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
+
+        descendant_ids <- get_descendant_concept_ids(
+          connection = conn,
+          cdm_database_schema = cfg$cm_data$cdm_database_schema,
+          concept_id = selected_row$conceptId[[1]],
+          include_self = TRUE
+        )
+
+        ids <- expand_covariates_from_descendant_concepts(
+          catalog_df = covariate_catalog(),
+          selected_covariate_id = input$excluded_covariates_search,
+          descendant_concept_ids = descendant_ids
+        )
+
+        add_covariates(excluded_covariate_ids, ids)
+        append_log("Excluded covariates: added ", length(ids), " covariates from descendant concepts.")
+      },
+      error = function(e) {
+        append_log("Excluded covariates descendant expansion failed: ", conditionMessage(e))
+      }
+    )
+  })
+
+  observeEvent(input$forced_covariates_remove_selected, ignoreInit = TRUE, {
+    remove_selected_rows(forced_covariate_ids, "forced_covariates_selected_table_rows_selected")
+  })
+
+  observeEvent(input$excluded_covariates_remove_selected, ignoreInit = TRUE, {
+    remove_selected_rows(excluded_covariate_ids, "excluded_covariates_selected_table_rows_selected")
+  })
+
+  observeEvent(input$forced_covariates_clear, ignoreInit = TRUE, {
+    forced_covariate_ids(integer(0))
+  })
+
+  observeEvent(input$excluded_covariates_clear, ignoreInit = TRUE, {
+    excluded_covariate_ids(integer(0))
+  })
+
+  output$forced_covariates_selected_table <- DT::renderDataTable({
+    DT::datatable(
+      build_selected_covariates_table(forced_covariate_ids(), covariate_catalog()),
+      rownames = FALSE,
+      selection = "multiple",
+      options = list(
+        scrollY = "260px",
+        scrollX = TRUE,
+        paging = FALSE,
+        searching = FALSE,
+        info = FALSE
+      )
+    )
+  })
+
+  output$excluded_covariates_selected_table <- DT::renderDataTable({
+    DT::datatable(
+      build_selected_covariates_table(excluded_covariate_ids(), covariate_catalog()),
+      rownames = FALSE,
+      selection = "multiple",
+      options = list(
+        scrollY = "260px",
+        scrollX = TRUE,
+        paging = FALSE,
+        searching = FALSE,
+        info = FALSE
+      )
+    )
   })
 
   observeEvent(input$target_save_json, ignoreInit = TRUE, {
@@ -209,28 +604,6 @@ server <- function(input, output, session) {
     )
   })
 
-  observeEvent(TRUE, {
-    tryCatch(
-      {
-        connection_info <- initialize_connection()
-        append_log("Connection initialized.")
-        append_log("Connection mode: ", connection_info$connection_mode)
-        append_log("DBMS: ", connection_info$dbms)
-
-        if (identical(connection_info$connection_mode, "demo")) {
-          append_log("Demo source path: ", connection_info$source_path)
-        } else {
-          append_log("Server: ", connection_info$server)
-          append_log("Port: ", ifelse(is.na(connection_info$port), "(default)", connection_info$port))
-          append_log("User: ", connection_info$user)
-        }
-      },
-      error = function(e) {
-        append_log("Connection initialization failed: ", conditionMessage(e))
-      }
-    )
-  }, once = TRUE)
-
   observeEvent(input$clear_log, ignoreInit = TRUE, {
     log_store("")
   })
@@ -240,29 +613,9 @@ server <- function(input, output, session) {
 
     build_config_from_input(
       input = input,
-      connection_info = active_connection_info()
-    )
-  })
-
-  observeEvent(input$initialize_connection, ignoreInit = TRUE, {
-    tryCatch(
-      {
-        connection_info <- initialize_connection()
-        append_log("Connection re-initialized.")
-        append_log("Connection mode: ", connection_info$connection_mode)
-        append_log("DBMS: ", connection_info$dbms)
-
-        if (identical(connection_info$connection_mode, "demo")) {
-          append_log("Demo source path: ", connection_info$source_path)
-        } else {
-          append_log("Server: ", connection_info$server)
-          append_log("Port: ", ifelse(is.na(connection_info$port), "(default)", connection_info$port))
-          append_log("User: ", connection_info$user)
-        }
-      },
-      error = function(e) {
-        append_log("Connection initialization failed: ", conditionMessage(e))
-      }
+      connection_info = active_connection_info(),
+      forced_covariate_ids = forced_covariate_ids(),
+      excluded_covariate_ids = excluded_covariate_ids()
     )
   })
 
@@ -277,6 +630,8 @@ server <- function(input, output, session) {
         append_log("Target cohort ID: ", cfg$cohorts$target_cohort_id)
         append_log("Comparator cohort ID: ", cfg$cohorts$comparator_cohort_id)
         append_log("Primary outcome cohort ID: ", cfg$cohorts$primary_outcome_cohort_id)
+        append_log("Forced covariates count: ", length(cfg$covariate_screening$forced_covariate_ids))
+        append_log("Excluded covariates count: ", length(cfg$covariate_screening$excluded_covariate_ids))
 
         if (isTRUE(cfg$cohorts$generate_cohorts_from_json)) {
           append_log("Cohort generation from JSON is enabled.")
@@ -299,6 +654,15 @@ server <- function(input, output, session) {
     )
 
     run_state(FALSE)
+  })
+
+  output$covariate_catalog_status <- renderText({
+    n <- nrow(covariate_catalog())
+    if (n == 0) {
+      "No covariate catalog loaded."
+    } else {
+      paste("Loaded", n, "covariates.")
+    }
   })
 
   output$connection_status <- renderText({

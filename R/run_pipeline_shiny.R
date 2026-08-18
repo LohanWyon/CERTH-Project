@@ -354,6 +354,12 @@ run_covariate_screening <- function(population,
     )
   }
 
+  if (isTRUE(covariate_screening_config$include_forced_covariates)) {
+    forced_ids <- unique(as.integer(covariate_screening_config$forced_covariate_ids))
+    forced_ids <- forced_ids[!is.na(forced_ids)]
+    selected_covariate_ids <- union(as.integer(selected_covariate_ids), forced_ids)
+  }
+
   screening_log_df <- if (length(screening_log) > 0) do.call(rbind, screening_log) else data.frame()
 
   if (isTRUE(output_config$save_dev_files) && nrow(screening_log_df) > 0) {
@@ -495,7 +501,6 @@ find_high_correlation_covariates <- function(cm_data,
   out_all <- out[order(-abs(out$correlation)), , drop = FALSE]
   rownames(out_all) <- NULL
 
-
   write_csv_safe(
     out_all,
     file.path(debug_dir, "debug_all_covariate_correlations.csv")
@@ -547,9 +552,20 @@ fit_ps_model <- function(population,
     }
   }
 
+  manual_excluded_covariate_ids <- integer(0)
+  if (isTRUE(covariate_screening_config$exclude_artefactual_covariates)) {
+    manual_excluded_covariate_ids <- unique(as.integer(covariate_screening_config$excluded_covariate_ids))
+    manual_excluded_covariate_ids <- manual_excluded_covariate_ids[!is.na(manual_excluded_covariate_ids)]
+  }
+
   message(
     "Auto-excluded covariate IDs: ",
     if (length(auto_excluded_covariate_ids) == 0) "<none>" else paste(auto_excluded_covariate_ids, collapse = ", ")
+  )
+
+  message(
+    "Manually excluded covariate IDs: ",
+    if (length(manual_excluded_covariate_ids) == 0) "<none>" else paste(manual_excluded_covariate_ids, collapse = ", ")
   )
 
   if (isTRUE(output_config$save_debug_files)) {
@@ -564,6 +580,13 @@ fit_ps_model <- function(population,
         file.path(paths$debug, "debug_auto_excluded_covariate_ids.csv")
       )
     }
+
+    if (length(manual_excluded_covariate_ids) > 0) {
+      write_csv_safe(
+        data.frame(covariateId = manual_excluded_covariate_ids),
+        file.path(paths$debug, "debug_manual_excluded_covariate_ids.csv")
+      )
+    }
   }
 
   final_include_ids <- screening_results$selected_covariate_ids
@@ -574,12 +597,19 @@ fit_ps_model <- function(population,
     final_include_ids <- final_include_ids[!is.na(final_include_ids)]
   }
 
-  final_exclude_ids <- auto_excluded_covariate_ids
+  final_exclude_ids <- union(auto_excluded_covariate_ids, manual_excluded_covariate_ids)
   if (is.null(final_exclude_ids) || length(final_exclude_ids) == 0) {
     final_exclude_ids <- NULL
   } else {
     final_exclude_ids <- as.integer(final_exclude_ids)
     final_exclude_ids <- final_exclude_ids[!is.na(final_exclude_ids)]
+  }
+
+  if (!is.null(final_include_ids) && !is.null(final_exclude_ids)) {
+    final_include_ids <- setdiff(final_include_ids, final_exclude_ids)
+    if (length(final_include_ids) == 0) {
+      final_include_ids <- NULL
+    }
   }
 
   message("Final include covariate count: ", length(final_include_ids))
@@ -606,6 +636,7 @@ fit_ps_model <- function(population,
     save_rds_safe(ps, file.path(paths$dev, "ps.rds"))
     save_rds_safe(ps_model_coefficients, file.path(paths$dev, "ps_model_coefficients.rds"))
     save_rds_safe(auto_excluded_covariate_ids, file.path(paths$dev, "auto_excluded_covariate_ids.rds"))
+    save_rds_safe(manual_excluded_covariate_ids, file.path(paths$dev, "manual_excluded_covariate_ids.rds"))
   }
 
   list(
@@ -613,6 +644,7 @@ fit_ps_model <- function(population,
     screening = screening_results,
     ps_model_coefficients = ps_model_coefficients,
     auto_excluded_covariate_ids = auto_excluded_covariate_ids,
+    manual_excluded_covariate_ids = manual_excluded_covariate_ids,
     high_correlation_table = high_correlation_table
   )
 }

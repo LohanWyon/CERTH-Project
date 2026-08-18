@@ -37,11 +37,128 @@ cohort_json_selector_ui <- function(prefix, label) {
   )
 }
 
+covariate_picker_ui <- function(prefix, title) {
+  card(
+    card_header(title),
+    card_body(
+      div(
+        class = "covariate-table-block",
+        div(
+          class = "covariate-table-title",
+          "Selected covariates"
+        ),
+        div(
+          class = "covariate-table-wrap",
+          DT::dataTableOutput(paste0(prefix, "_selected_table"))
+        )
+      ),
+      br(),
+      div(
+        class = "covariate-actions-block",
+        div(
+          class = "covariate-actions-title",
+          "Search and actions"
+        ),
+        selectizeInput(
+          inputId = paste0(prefix, "_search"),
+          label = "Search covariates by name or ID",
+          choices = NULL,
+          selected = NULL,
+          multiple = FALSE,
+          options = list(
+            placeholder = "Type a covariate name or ID",
+            maxOptions = 50
+          )
+        ),
+        fluidRow(
+          column(
+            4,
+            actionButton(
+              inputId = paste0(prefix, "_add"),
+              label = "Add selected",
+              class = "btn-secondary w-100"
+            )
+          ),
+          column(
+            4,
+            actionButton(
+              inputId = paste0(prefix, "_add_same_concept"),
+              label = "Add same concept ID",
+              class = "btn-secondary w-100"
+            )
+          ),
+          column(
+            4,
+            actionButton(
+              inputId = paste0(prefix, "_add_with_subcov"),
+              label = "Add grouped variants",
+              class = "btn-secondary w-100"
+            )
+          )
+        ),
+        br(),
+        fluidRow(
+          column(
+            6,
+            actionButton(
+              inputId = paste0(prefix, "_remove_selected"),
+              label = "Remove selected",
+              class = "btn-outline-secondary w-100"
+            )
+          ),
+          column(
+            6,
+            actionButton(
+              inputId = paste0(prefix, "_clear"),
+              label = "Clear list",
+              class = "btn-outline-danger w-100"
+            )
+          )
+        ),
+        br(),
+        helpText("Use 'Add same concept ID' to add all covariates sharing the same OMOP concept ID.")
+      )
+    )
+  )
+}
+
 configuration_tab <- function() {
   tabPanel(
     title = "Configuration",
     value = "configuration",
     fluidPage(
+      tags$head(
+        tags$style(HTML("
+          .covariate-table-block,
+          .covariate-actions-block {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 0.9rem;
+            background-color: #ffffff;
+          }
+
+          .covariate-table-title,
+          .covariate-actions-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+          }
+
+          .covariate-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+          }
+
+          .covariate-table-wrap .dataTables_wrapper {
+            width: 100%;
+          }
+
+          .covariate-table-wrap table.dataTable th,
+          .covariate-table-wrap table.dataTable td {
+            white-space: nowrap;
+            vertical-align: top;
+          }
+        "))
+      ),
       br(),
       card(
         card_header("Database connection"),
@@ -158,27 +275,24 @@ configuration_tab <- function() {
             ),
             column(
               6,
-              tags$div(
-                style = "opacity: 0.65;",
-                tags$label("Clinically forced covariates (future feature)"),
-                tags$textarea(
-                  id = "forced_covariates_text_disabled",
-                  class = "form-control",
-                  rows = 5,
-                  placeholder = "Future feature: one clinically forced covariate per line",
-                  disabled = ""
-                ),
-                br(),
-                tags$label("Excluded artefactual covariates (future feature)"),
-                tags$textarea(
-                  id = "excluded_covariates_text_disabled",
-                  class = "form-control",
-                  rows = 5,
-                  placeholder = "Future feature: one excluded covariate per line",
-                  disabled = ""
-                ),
-                helpText("Displayed for protocol completeness only. Not yet connected to the analysis pipeline.")
-              )
+              actionButton(
+                "load_covariate_catalog",
+                "Load covariate catalog",
+                class = "btn-secondary"
+              ),
+              br(), br(),
+              textOutput("covariate_catalog_status")
+            )
+          ),
+          br(),
+          fluidRow(
+            column(
+              6,
+              covariate_picker_ui("forced_covariates", "Clinically forced covariates")
+            ),
+            column(
+              6,
+              covariate_picker_ui("excluded_covariates", "Excluded artefactual covariates")
             )
           )
         )
