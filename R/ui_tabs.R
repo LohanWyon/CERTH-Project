@@ -4,7 +4,7 @@ cohort_json_selector_ui <- function(prefix, label) {
   tagList(
     selectInput(
       inputId = paste0(prefix, "_json_choice"),
-      label = paste0(label, " JSON definition"),
+      label = paste0(label, " cohort"),
       choices = c(
         "Select an existing cohort JSON" = "",
         "Import a new cohort JSON" = "__new__"
@@ -32,8 +32,7 @@ cohort_json_selector_ui <- function(prefix, label) {
         class = "btn-secondary"
       ),
       br(), br()
-    ),
-    helpText("Cohort IDs are assigned automatically by the application.")
+    )
   )
 }
 
@@ -86,33 +85,7 @@ configuration_tab <- function() {
       card(
         card_header("Cohort definitions"),
         card_body(
-          fluidRow(
-            column(
-              6,
-              textInput(
-                "cohort_json_folder",
-                "Cohort JSON folder",
-                value = "cohorts_json"
-              ),
-              checkboxInput(
-                "generate_cohorts_from_json",
-                "Generate cohorts from stored / imported ATLAS JSON definitions",
-                value = TRUE
-              ),
-              helpText("A single shared folder is used for target, comparator, and outcome JSON files.")
-            ),
-            column(
-              6,
-              textInput(
-                "output_folder",
-                "Output folder",
-                value = ""
-              ),
-              helpText("Leave empty to use the default analysis output folder.")
-            )
-          ),
-          br(),
-          tags$hr(),
+          p("Select or import the three required cohort definitions (target, comparator, and primary outcome)."),
           br(),
           fluidRow(
             column(
@@ -129,48 +102,18 @@ configuration_tab <- function() {
             )
           ),
           br(),
-          textInput(
-            "outcome_cohort_ids",
-            "Additional outcome cohort IDs (comma-separated, optional)",
-            value = ""
-          ),
-          helpText("Optional. The primary analysis uses the primary outcome cohort above.")
-        )
-      ),
-      br(),
-      card(
-        card_header("Protocol options"),
-        card_body(
-          fluidRow(
-            column(
-              6,
-              textInput(
-                "study_start_date",
-                "Study start date (optional, YYYY-MM-DD)",
-                value = ""
-              ),
-              textInput(
-                "study_end_date",
-                "Study end date (optional, YYYY-MM-DD)",
-                value = ""
-              ),
-              helpText("Leave empty to use all available data.")
-            ),
-            column(
-              6,
-              helpText("Study period restrictions. Core protocol parameters remain fixed in the backend.")
-            )
-          ),
-          br(),
-          tags$hr(),
-          br(),
           actionButton(
             "load_covariate_catalog",
             "Load covariate catalog",
             class = "btn-primary"
           ),
-          helpText("Click to generate the covariate catalog from the selected cohorts."),
-          br(),
+          helpText("Click to generate the covariate catalog from the selected cohorts.")
+        )
+      ),
+      br(),
+      card(
+        card_header("Covariate selection"),
+        card_body(
           fluidRow(
             column(
               6,
@@ -284,39 +227,6 @@ configuration_tab <- function() {
             br(),
             helpText("Use the search box to find covariates by name or ID.")
         )
-      ),
-      br(),
-      card(
-        card_header("Technical settings"),
-        card_body(
-          fluidRow(
-            column(
-              4,
-              textInput(
-                "cdm_database_schema",
-                "CDM database schema",
-                value = "main"
-              )
-            ),
-            column(
-              4,
-              textInput(
-                "cohort_database_schema",
-                "Cohort database schema",
-                value = "main"
-              )
-            ),
-            column(
-              4,
-              textInput(
-                "cohort_table",
-                "Cohort table",
-                value = "cohort"
-              )
-            )
-          ),
-          helpText("Automatically prefilled for Eunomia demo. Advanced users may change these values for external databases.")
-        )
       )
     )
   )
@@ -333,6 +243,67 @@ advanced_tuning_tab <- function() {
         card_body(
           p("These settings are optional. Default values match the primary protocol and can usually be left unchanged."),
           p("They are intended for technical adaptation to database size, propensity score overlap, model stability, and development or debugging workflows.")
+        )
+      ),
+      br(),
+      card(
+        card_header("Cohort and output settings"),
+        card_body(
+          fluidRow(
+            column(
+              6,
+              textInput(
+                "cohort_json_folder",
+                "Cohort JSON folder",
+                value = "cohorts_json"
+              ),
+              checkboxInput(
+                "generate_cohorts_from_json",
+                "Generate cohorts from stored / imported ATLAS JSON definitions",
+                value = TRUE
+              ),
+              helpText("A single shared folder is used for target, comparator, and outcome JSON files.")
+            ),
+            column(
+              6,
+              textInput(
+                "output_folder",
+                "Output folder",
+                value = ""
+              ),
+              textInput(
+                "outcome_cohort_ids",
+                "Additional outcome cohort IDs (comma-separated, optional)",
+                value = ""
+              ),
+              helpText("Leave output folder empty to use the default. Additional outcomes are optional.")
+            )
+          )
+        )
+      ),
+      br(),
+      card(
+        card_header("Study period (optional)"),
+        card_body(
+          fluidRow(
+            column(
+              6,
+              textInput(
+                "study_start_date",
+                "Study start date (YYYY-MM-DD)",
+                value = ""
+              ),
+              textInput(
+                "study_end_date",
+                "Study end date (YYYY-MM-DD)",
+                value = ""
+              )
+            ),
+            column(
+              6,
+              helpText("Leave empty to use all available data. These settings restrict the study period.")
+            )
+          )
         )
       ),
       br(),
@@ -531,21 +502,43 @@ advanced_tuning_tab <- function() {
         column(
           6,
           card(
-            card_header("Saved files"),
+            card_header("Technical settings"),
             card_body(
-              checkboxInput(
-                "save_dev_files",
-                "Save additional development files",
-                value = FALSE
+              textInput(
+                "cdm_database_schema",
+                "CDM database schema",
+                value = "main"
               ),
-              checkboxInput(
-                "save_debug_files",
-                "Save additional debug files",
-                value = FALSE
+              textInput(
+                "cohort_database_schema",
+                "Cohort database schema",
+                value = "main"
               ),
-              helpText("Final analysis outputs are always saved automatically. Development and debug files are optional and are written to separate subfolders.")
+              textInput(
+                "cohort_table",
+                "Cohort table",
+                value = "cohort"
+              ),
+              helpText("Automatically prefilled for Eunomia demo. Advanced users may change these values for external databases.")
             )
           )
+        )
+      ),
+      br(),
+      card(
+        card_header("Saved files"),
+        card_body(
+          checkboxInput(
+            "save_dev_files",
+            "Save additional development files",
+            value = FALSE
+          ),
+          checkboxInput(
+            "save_debug_files",
+            "Save additional debug files",
+            value = FALSE
+          ),
+          helpText("Final analysis outputs are always saved automatically. Development and debug files are optional and are written to separate subfolders.")
         )
       )
     )
