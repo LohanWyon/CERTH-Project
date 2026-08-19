@@ -66,14 +66,6 @@ normalize_file_stem <- function(x) {
   x
 }
 
-ensure_json_extension <- function(x) {
-  if (!grepl("\\.json$", x, ignore.case = TRUE)) {
-    paste0(x, ".json")
-  } else {
-    x
-  }
-}
-
 ensure_dir <- function(path) {
   if (!dir.exists(path)) {
     dir.create(path, recursive = TRUE, showWarnings = FALSE)
@@ -497,10 +489,10 @@ build_covariate_screening_config <- function(input,
 
   list(
     enabled = isTRUE(input$screening_enabled),
-    number_of_runs = as.integer(input$screening_number_of_runs %||% 5),
+    number_of_runs = as.integer(input$screening_number_of_runs %||% 3),
     sample_fraction = 0.05,
     min_subjects_per_group = as.integer(input$screening_min_subjects_per_group %||% 500),
-    top_covariates_per_run = as.integer(input$screening_top_covariates_per_run %||% 1000),
+    top_covariates_per_run = as.integer(input$screening_top_covariates_per_run %||% 500),
     seed = 20260619,
     include_forced_covariates = length(forced_covariate_ids) > 0,
     forced_covariate_ids = forced_covariate_ids,
@@ -522,6 +514,24 @@ build_ps_model_config <- function() {
 }
 
 build_adjustment_config <- function(input) {
+  if (isTRUE(input$auto_caliper_search)) {
+    return(list(
+      method = "matching",
+      match_ratio = 1,
+      caliper = 0.2,
+      caliper_scale = "sd_logit_ps",
+      allow_caliper_adaptation = FALSE,
+      use_trimming = isTRUE(input$trimming_enabled),
+      trimming_rule = "common_support_percentile",
+      trimming_lower_percentile = as.numeric(input$trimming_lower_percentile %||% 0.01),
+      trimming_upper_percentile = as.numeric(input$trimming_upper_percentile %||% 0.99),
+      trim_only_if_clear_non_overlap = TRUE,
+      auto_caliper_search = TRUE,
+      target_match_rate = as.numeric(input$target_match_rate %||% 0.65),
+      target_match_rate_tolerance = as.numeric(input$target_match_rate_tolerance %||% 0.15)
+    ))
+  }
+  
   list(
     method = "matching",
     match_ratio = 1,
@@ -537,7 +547,10 @@ build_adjustment_config <- function(input) {
     trimming_rule = "common_support_percentile",
     trimming_lower_percentile = as.numeric(input$trimming_lower_percentile %||% 0.01),
     trimming_upper_percentile = as.numeric(input$trimming_upper_percentile %||% 0.99),
-    trim_only_if_clear_non_overlap = TRUE
+    trim_only_if_clear_non_overlap = TRUE,
+    auto_caliper_search = FALSE,
+    target_match_rate = NULL,
+    target_match_rate_tolerance = NULL
   )
 }
 

@@ -350,14 +350,14 @@ advanced_tuning_tab <- function() {
               numericInput(
                 "screening_number_of_runs",
                 "Number of screening runs",
-                value = 5,
+                value = 3,
                 min = 1,
                 step = 1
               ),
               numericInput(
                 "screening_top_covariates_per_run",
                 "Top covariates retained per run",
-                value = 1000,
+                value = 500,
                 min = 1,
                 step = 50
               ),
@@ -374,60 +374,133 @@ advanced_tuning_tab <- function() {
         column(
           6,
           card(
-            card_header("Matching"),
+            card_header("Auto-caliper search (recommended)"),
             card_body(
-              numericInput(
-                "matching_caliper",
-                "Initial caliper",
-                value = 0.2,
-                min = 0.01,
-                max = 1,
-                step = 0.01
-              ),
               checkboxInput(
-                "matching_allow_caliper_adaptation",
-                "Enable rule-based caliper adaptation",
+                "auto_caliper_search",
+                "Automatically search for optimal caliper",
                 value = TRUE
               ),
-              numericInput(
-                "matching_low_match_rate_threshold",
-                "Low match rate threshold",
-                value = 0.25,
-                min = 0,
-                max = 1,
-                step = 0.01
+              conditionalPanel(
+                condition = "input.auto_caliper_search",
+                numericInput(
+                  "target_match_rate",
+                  "Target match rate",
+                  value = 0.65,
+                  min = 0.3,
+                  max = 0.95,
+                  step = 0.05
+                ),
+                numericInput(
+                  "target_match_rate_tolerance",
+                  "Acceptable tolerance",
+                  value = 0.15,
+                  min = 0.05,
+                  max = 0.3,
+                  step = 0.05
+                ),
+                helpText("The algorithm will test multiple calipers and select the best one. If target cannot be reached, it falls back to the optimal caliper tested.")
               ),
-              numericInput(
-                "matching_caliper_if_low_match_rate",
-                "Caliper if low match rate",
-                value = 0.25,
-                min = 0.01,
-                max = 1,
-                step = 0.01
-              ),
-              numericInput(
-                "matching_high_match_rate_threshold",
-                "High match rate threshold",
-                value = 0.90,
-                min = 0,
-                max = 1,
-                step = 0.01
-              ),
-              numericInput(
-                "matching_poor_balance_threshold",
-                "Poor balance threshold",
-                value = 0.10,
-                min = 0,
-                max = 1,
-                step = 0.01
-              ),
-              numericInput(
-                "matching_caliper_if_poor_balance",
-                "Caliper if poor balance",
-                value = 0.15,
-                min = 0.01,
-                max = 1,
-                step = 0.01
+              conditionalPanel(
+                condition = "!input.auto_caliper_search",
+                tags$hr(),
+                p("Manual mode: Use a fixed caliper value."),
+                numericInput(
+                  "matching_caliper",
+                  "Fixed caliper",
+                  value = 0.2,
+                  min = 0.01,
+                  max = 1,
+                  step = 0.01
+                )
+              )
+            )
+          )
+        )
+      ),
+      br(),
+      conditionalPanel(
+        condition = "!input.auto_caliper_search",
+        fluidRow(
+          column(
+            6,
+            card(
+              card_header("Manual matching options"),
+              card_body(
+                checkboxInput(
+                  "matching_allow_caliper_adaptation",
+                  "Enable rule-based caliper adaptation",
+                  value = TRUE
+                ),
+                numericInput(
+                  "matching_low_match_rate_threshold",
+                  "Low match rate threshold",
+                  value = 0.25,
+                  min = 0,
+                  max = 1,
+                  step = 0.01
+                ),
+                numericInput(
+                  "matching_caliper_if_low_match_rate",
+                  "Caliper if low match rate",
+                  value = 0.25,
+                  min = 0.01,
+                  max = 1,
+                  step = 0.01
+                ),
+                numericInput(
+                  "matching_high_match_rate_threshold",
+                  "High match rate threshold",
+                  value = 0.90,
+                  min = 0,
+                  max = 1,
+                  step = 0.01
+                ),
+                numericInput(
+                  "matching_poor_balance_threshold",
+                  "Poor balance threshold",
+                  value = 0.10,
+                  min = 0,
+                  max = 1,
+                  step = 0.01
+                ),
+                numericInput(
+                  "matching_caliper_if_poor_balance",
+                  "Caliper if poor balance",
+                  value = 0.15,
+                  min = 0.01,
+                  max = 1,
+                  step = 0.01
+                )
+              )
+            )
+          ),
+          column(
+            6,
+            card(
+              card_header("Trimming"),
+              card_body(
+                checkboxInput(
+                  "trimming_enabled",
+                  "Enable propensity score trimming",
+                  value = FALSE
+                ),
+                numericInput(
+                  "trimming_lower_percentile",
+                  "Lower percentile",
+                  value = 0.01,
+                  min = 0,
+                  max = 0.49,
+                  step = 0.01
+                ),
+                numericInput(
+                  "trimming_upper_percentile",
+                  "Upper percentile",
+                  value = 0.99,
+                  min = 0.51,
+                  max = 1,
+                  step = 0.01
+                )
               )
             )
           )
@@ -435,35 +508,6 @@ advanced_tuning_tab <- function() {
       ),
       br(),
       fluidRow(
-        column(
-          6,
-          card(
-            card_header("Trimming"),
-            card_body(
-              checkboxInput(
-                "trimming_enabled",
-                "Enable propensity score trimming",
-                value = FALSE
-              ),
-              numericInput(
-                "trimming_lower_percentile",
-                "Lower percentile",
-                value = 0.01,
-                min = 0,
-                max = 0.49,
-                step = 0.01
-              ),
-              numericInput(
-                "trimming_upper_percentile",
-                "Upper percentile",
-                value = 0.99,
-                min = 0.51,
-                max = 1,
-                step = 0.01
-              )
-            )
-          )
-        ),
         column(
           6,
           card(
@@ -483,23 +527,25 @@ advanced_tuning_tab <- function() {
               )
             )
           )
-        )
-      ),
-      br(),
-      card(
-        card_header("Saved files"),
-        card_body(
-          checkboxInput(
-            "save_dev_files",
-            "Save additional development files",
-            value = FALSE
-          ),
-          checkboxInput(
-            "save_debug_files",
-            "Save additional debug files",
-            value = FALSE
-          ),
-          helpText("Final analysis outputs are always saved automatically. Development and debug files are optional and are written to separate subfolders.")
+        ),
+        column(
+          6,
+          card(
+            card_header("Saved files"),
+            card_body(
+              checkboxInput(
+                "save_dev_files",
+                "Save additional development files",
+                value = FALSE
+              ),
+              checkboxInput(
+                "save_debug_files",
+                "Save additional debug files",
+                value = FALSE
+              ),
+              helpText("Final analysis outputs are always saved automatically. Development and debug files are optional and are written to separate subfolders.")
+            )
+          )
         )
       )
     )

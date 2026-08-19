@@ -705,10 +705,168 @@ compute_balance_metrics <- function(covariate_balance) {
   )
 }
 
+try_match <- function(ps, cm_data, caliper, match_ratio) {
+  match_args <- CohortMethod::createMatchOnPsArgs(
+    caliper = caliper,
+    maxRatio = match_ratio
+  )
+
+  matched_population <- CohortMethod::matchOnPs(
+    population = ps,
+    matchOnPsArgs = match_args
+  )
+
+  treated_before <- sum(ps$treatment == 1, na.rm = TRUE)
+  treated_after <- sum(matched_population$treatment == 1, na.rm = TRUE)
+  match_rate <- if (treated_before > 0) treated_after / treated_before else 0
+
+  list(
+    matched_population = matched_population,
+    caliper_used = caliper,
+    match_rate = match_rate
+  )
+}
+
+build_matching_result <- function(result, cm_data) {
+  covariate_balance <- CohortMethod::computeCovariateBalance(
+    cohortMethodData = cm_data,
+    population = result$matched_population
+  )
+
+  list(
+    matched_population = result$matched_population,
+    covariate_balance = covariate_balance,
+    caliper_used = result$caliper_used,
+    match_rate = result$match_rate
+  )
+}
+
+interpolate_and_match <- function(ps, cm_data, cal1, res1, cal2, res2, target_rate, tolerance, match_ratio) {
+  interp_fun <- stats::approxfun(
+    x = c(res1$match_rate, res2$match_rate),
+    y = c(cal1, cal2),
+    method = "linear",
+    rule = 2
+  )
+
+  caliper_optimal <- interp_fun(target_rate)
+  caliper_optimal <- max(0.05, min(0.5, caliper_optimal))
+
+  result_optimal <- try_match(ps, cm_data, caliper_optimal, match_ratio)
+
+  if (abs(result_optimal$match_rate - target_rate) <= tolerance) {
+    return(build_matching_result(result_optimal, cm_data))
+  }
+
+  caliper_refine_low <- max(0.05, caliper_optimal - 0.02)
+  caliper_refine_high <- min(0.5, caliper_optimal + 0.02)
+
+  result_refine_low <- try_match(ps, cm_data, caliper_refine_low, match_ratio)
+  result_refine_high <- try_match(ps, cm_data, caliper_refine_high, match_ratio)
+
+  all_results <- list(result_optimal, result_refine_low, result_refine_high)
+  best_idx <- which.min(sapply(all_results, function(r) abs(r$match_rate - target_rate)))
+
+  build_matching_result(all_results[[best_idx]], cm_data)
+}
+
 apply_matching <- function(ps,
                            cm_data,
                            adjustment_config,
                            output_config) {
+  if (isTRUE(adjustment_config$auto_caliper_search)) {
+    message("[auto_caliper] Starting auto-caliper search...")
+    
+    target_rate <- adjustment_config$target_match_rate %||% 0.65
+    tolerance <- adjustment_config$target_match_rate_tolerance %||% 0.15
+    match_ratio <- adjustment_config$match_ratio
+
+    message(sprintf("[auto_caliper] Target: %.2f ± %.2f", target_rate, tolerance))
+
+    # Test 2 calipers de base
+    caliper_test <- c(0.15, 0.25)
+    results <- lapply(caliper_test, function(cal) {
+      message(sprintf("[auto_caliper] Testing caliper %.2f...", cal))
+      try_match(ps, cm_data, cal, match_ratio)
+    })
+    
+    rates <- sapply(results, function(r) r$match_rate)
+    message(sprintf("[auto_caliper] Match rates: %.2f (cal=%.2f), %.2f (cal=%.2f)",
+                    rates[1], caliper_test[1], rates[2], caliper_test[2]))
+
+    # Cas 1: Target est entre les deux rates → interpolation
+    if ((rates[1] <= target_rate && rates[2] >= target_rate) ||
+        (rates[1] >= target_rate && rates[2] <= target_rate)) {
+      message("[auto_caliper] Target is between the two rates, interpolating...")
+      return(interpolate_and_match(ps, cm_data, caliper_test[1], results[[1]], 
+                                   caliper_test[2], results[[2]],
+                                   target_rate, tolerance, match_ratio))
+    }
+
+    # Cas 2: Les deux rates < target → besoin d'un caliper plus large
+    if (rates[1] < target_rate && rates[2] < target_rate) {
+      message("[auto_caliper] Both rates below target, testing wider caliper...")
+      
+      # Test calipers progressivement plus larges
+      caliper_wide <- c(0.35, 0.50, 0.75)
+      result_last <- NULL
+      for (cal in caliper_wide) {
+        result_wide <- try_match(ps, cm_data, cal, match_ratio)
+        message(sprintf("[auto_caliper] Caliper %.2f → match rate: %.2f", cal, result_wide$match_rate))
+        
+        if (result_wide$match_rate >= target_rate) {
+          # Trouvé ! Interpole entre le dernier étroit et ce large
+          last_narrow_idx <- if (caliper_test[2] < cal) 2 else 1
+          return(interpolate_and_match(ps, cm_data, caliper_test[last_narrow_idx], 
+                                       results[[last_narrow_idx]], cal, result_wide,
+                                       target_rate, tolerance, match_ratio))
+        }
+        result_last <- result_wide
+      }
+      
+      # Aucun ne reach target → prends le meilleur (le plus large)
+      message("[auto_caliper] Could not reach target, using widest caliper tested")
+      all_results <- c(results, list(result_last))
+      best_idx <- which.max(sapply(all_results, function(r) r$match_rate))
+      return(build_matching_result(all_results[[best_idx]], cm_data))
+    }
+
+    # Cas 3: Les deux rates > target → besoin d'un caliper plus strict
+    if (rates[1] > target_rate && rates[2] > target_rate) {
+      message("[auto_caliper] Both rates above target, testing stricter caliper...")
+      
+      # Test calipers progressivement plus stricts
+      caliper_strict <- c(0.10, 0.05, 0.02)
+      result_last <- NULL
+      for (cal in caliper_strict) {
+        result_strict <- try_match(ps, cm_data, cal, match_ratio)
+        message(sprintf("[auto_caliper] Caliper %.2f → match rate: %.2f", cal, result_strict$match_rate))
+        
+        if (result_strict$match_rate <= target_rate) {
+          # Trouvé ! Interpole entre ce strict et le moins étroit des larges
+          last_wide_idx <- if (rates[1] > rates[2]) 1 else 2
+          return(interpolate_and_match(ps, cm_data, cal, result_strict, 
+                                       caliper_test[last_wide_idx], results[[last_wide_idx]],
+                                       target_rate, tolerance, match_ratio))
+        }
+        result_last <- result_strict
+      }
+      
+      # Aucun ne descend sous target → prends le plus strict testé
+      message("[auto_caliper] Could not reach target, using strictest caliper tested")
+      all_results <- c(results, list(result_last))
+      best_idx <- which.min(sapply(all_results, function(r) r$match_rate))
+      return(build_matching_result(all_results[[best_idx]], cm_data))
+    }
+
+    # Fallback (ne devrait pas arriver)
+    message("[auto_caliper] Unexpected state, using best of initial tests")
+    best_idx <- which.min(abs(rates - target_rate))
+    return(build_matching_result(results[[best_idx]], cm_data))
+  }
+
+  # --- MODE MANUEL (fallback) ---
+  
   match_once <- function(caliper_value) {
     match_args <- CohortMethod::createMatchOnPsArgs(
       caliper = caliper_value,
@@ -742,6 +900,9 @@ apply_matching <- function(ps,
 
   if (isTRUE(adjustment_config$allow_caliper_adaptation) &&
       matched_fraction < adjustment_config$low_match_rate_threshold) {
+    message(sprintf("[fallback] Low match rate (%.2f), relaxing caliper from %.2f to %.2f",
+                    matched_fraction, adjustment_config$caliper, 
+                    adjustment_config$caliper_if_low_match_rate))
     final_match <- match_once(adjustment_config$caliper_if_low_match_rate)
   } else {
     balance_metrics <- compute_balance_metrics(initial_match$covariate_balance)
@@ -750,6 +911,9 @@ apply_matching <- function(ps,
         matched_fraction > adjustment_config$high_match_rate_threshold &&
         is.finite(balance_metrics$pct_above_0_1_after) &&
         balance_metrics$pct_above_0_1_after > adjustment_config$poor_balance_threshold) {
+      message(sprintf("[fallback] High match rate (%.2f) but poor balance (%.2f), tightening caliper from %.2f to %.2f",
+                      matched_fraction, balance_metrics$pct_above_0_1_after,
+                      adjustment_config$caliper, adjustment_config$caliper_if_poor_balance))
       final_match <- match_once(adjustment_config$caliper_if_poor_balance)
     }
   }
@@ -835,6 +999,7 @@ build_analysis_summary <- function(cfg,
     comparator_count_after_matching = sum(matching_result$matched_population$treatment == 0, na.rm = TRUE),
     selected_covariates_count = selected_covariates_count,
     caliper_used = matching_result$caliper_used,
+    match_rate = matching_result$match_rate %||% NA_real_,
     hazard_ratio = rr,
     ci_95_lower = ci_95_lower,
     ci_95_upper = ci_95_upper,
@@ -845,7 +1010,8 @@ build_analysis_summary <- function(cfg,
 
 build_matching_summary <- function(study_population,
                                    matched_population,
-                                   covariate_balance) {
+                                   covariate_balance,
+                                   match_rate = NULL) {
   treated_before <- sum(study_population$treatment == 1, na.rm = TRUE)
   comparator_before <- sum(study_population$treatment == 0, na.rm = TRUE)
   treated_after <- sum(matched_population$treatment == 1, na.rm = TRUE)
@@ -860,6 +1026,7 @@ build_matching_summary <- function(study_population,
     comparator_after_matching = comparator_after,
     treated_match_fraction = if (treated_before > 0) treated_after / treated_before else NA_real_,
     comparator_match_fraction = if (comparator_before > 0) comparator_after / comparator_before else NA_real_,
+    match_rate = match_rate %||% (if (treated_before > 0) treated_after / treated_before else NA_real_),
     max_abs_smd_after = balance_metrics$max_abs_smd_after,
     pct_covariates_abs_smd_gt_0_1_after = balance_metrics$pct_above_0_1_after
   )
@@ -981,13 +1148,15 @@ run_primary_ple_pipeline <- function(cfg) {
   matching_summary <- build_matching_summary(
     study_population = study_population,
     matched_population = matching_result$matched_population,
-    covariate_balance = matching_result$covariate_balance
+    covariate_balance = matching_result$covariate_balance,
+    match_rate = matching_result$match_rate
   )
 
   pipeline_artifacts <- list(
     adjusted_population = matching_result$matched_population,
     covariate_balance = matching_result$covariate_balance,
     caliper_used = matching_result$caliper_used,
+    match_rate = matching_result$match_rate,
     outcome_model = outcome_model,
     analysis_summary = analysis_summary,
     matching_summary = matching_summary
@@ -1008,6 +1177,7 @@ run_primary_ple_pipeline <- function(cfg) {
       adjusted_population = matching_result$matched_population,
       covariate_balance = matching_result$covariate_balance,
       caliper_used = matching_result$caliper_used,
+      match_rate = matching_result$match_rate,
       outcome_model = outcome_model,
       analysis_summary = analysis_summary,
       matching_summary = matching_summary
