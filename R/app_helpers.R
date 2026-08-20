@@ -244,7 +244,7 @@ expand_covariate_with_subcovariates <- function(catalog_df, selected_covariate_i
   selected_row <- find_covariate_catalog_row(catalog_df, selected_covariate_id)
 
   if (is.null(selected_row)) {
-    return(integer(0))
+    return(numeric(0))
   }
 
   analysis_id <- suppressWarnings(as.numeric(selected_row$analysisId[[1]]))
@@ -258,7 +258,7 @@ expand_covariate_with_subcovariates <- function(catalog_df, selected_covariate_i
       catalog_df$analysisId == analysis_id &
         catalog_df$conceptId == concept_id
     ]
-    matched_ids <- unique(as.integer(matched_ids))
+    matched_ids <- unique(as.numeric(matched_ids))
     matched_ids <- matched_ids[!is.na(matched_ids)]
 
     if (length(matched_ids) > 0) {
@@ -266,28 +266,40 @@ expand_covariate_with_subcovariates <- function(catalog_df, selected_covariate_i
     }
   }
 
-  as.integer(selected_row$covariateId[[1]])
+  cov_id <- suppressWarnings(as.numeric(selected_row$covariateId[[1]]))
+  if (is.na(cov_id)) {
+    return(numeric(0))
+  }
+  cov_id
 }
 
 expand_covariates_from_concept_id <- function(catalog_df, selected_covariate_id) {
   selected_row <- find_covariate_catalog_row(catalog_df, selected_covariate_id)
 
   if (is.null(selected_row)) {
-    return(integer(0))
+    return(numeric(0))
   }
 
   concept_id <- suppressWarnings(as.numeric(selected_row$conceptId[[1]]))
 
   if (is.na(concept_id) || !("conceptId" %in% names(catalog_df))) {
-    return(as.integer(selected_row$covariateId[[1]]))
+    cov_id <- suppressWarnings(as.numeric(selected_row$covariateId[[1]]))
+    if (is.na(cov_id)) {
+      return(numeric(0))
+    }
+    return(cov_id)
   }
 
   matched_ids <- catalog_df$covariateId[!is.na(catalog_df$conceptId) & catalog_df$conceptId == concept_id]
-  matched_ids <- unique(as.integer(matched_ids))
+  matched_ids <- unique(as.numeric(matched_ids))
   matched_ids <- matched_ids[!is.na(matched_ids)]
 
   if (length(matched_ids) == 0) {
-    return(as.integer(selected_row$covariateId[[1]]))
+    cov_id <- suppressWarnings(as.numeric(selected_row$covariateId[[1]]))
+    if (is.na(cov_id)) {
+      return(numeric(0))
+    }
+    return(cov_id)
   }
 
   sort(matched_ids)
@@ -295,34 +307,38 @@ expand_covariates_from_concept_id <- function(catalog_df, selected_covariate_id)
 
 expand_covariates_from_descendant_concepts <- function(catalog_df, selected_covariate_id, descendant_concept_ids) {
   if (is.null(catalog_df) || nrow(catalog_df) == 0) {
-    return(integer(0))
+    return(numeric(0))
   }
 
   if (is.null(descendant_concept_ids) || length(descendant_concept_ids) == 0) {
-    return(integer(0))
+    return(numeric(0))
   }
 
   matching_ids <- catalog_df$covariateId[!is.na(catalog_df$conceptId) & catalog_df$conceptId %in% descendant_concept_ids]
-  matching_ids <- unique(as.integer(matching_ids))
+  matching_ids <- unique(as.numeric(matching_ids))
   matching_ids <- matching_ids[!is.na(matching_ids)]
 
   if (length(matching_ids) == 0) {
-    return(as.integer(selected_covariate_id))
+    cov_id <- suppressWarnings(as.numeric(selected_covariate_id))
+    if (is.na(cov_id)) {
+      return(numeric(0))
+    }
+    return(cov_id)
   }
 
   sort(matching_ids)
 }
 
 build_selected_covariates_table <- function(selected_ids, catalog_df) {
-  selected_ids <- unique(suppressWarnings(as.integer(selected_ids)))
+  selected_ids <- unique(suppressWarnings(as.numeric(selected_ids)))
   selected_ids <- selected_ids[!is.na(selected_ids)]
 
   if (length(selected_ids) == 0) {
     return(data.frame(
-      covariateId = integer(0),
+      covariateId = numeric(0),
       covariateName = character(0),
-      analysisId = integer(0),
-      conceptId = integer(0),
+      analysisId = numeric(0),
+      conceptId = numeric(0),
       stringsAsFactors = FALSE
     ))
   }
@@ -336,8 +352,8 @@ build_selected_covariates_table <- function(selected_ids, catalog_df) {
       data.frame(
         covariateId = missing_ids,
         covariateName = paste0("Covariate ", missing_ids),
-        analysisId = NA_integer_,
-        conceptId = NA_integer_,
+        analysisId = NA_real_,
+        conceptId = NA_real_,
         stringsAsFactors = FALSE
       )
     )
@@ -479,12 +495,12 @@ build_study_population_config <- function() {
 }
 
 build_covariate_screening_config <- function(input,
-                                            forced_covariate_ids = integer(0),
-                                            excluded_covariate_ids = integer(0)) {
-  forced_covariate_ids <- unique(suppressWarnings(as.integer(forced_covariate_ids)))
+                                            forced_covariate_ids = numeric(0),
+                                            excluded_covariate_ids = numeric(0)) {
+  forced_covariate_ids <- unique(suppressWarnings(as.numeric(forced_covariate_ids)))
   forced_covariate_ids <- forced_covariate_ids[!is.na(forced_covariate_ids)]
 
-  excluded_covariate_ids <- unique(suppressWarnings(as.integer(excluded_covariate_ids)))
+  excluded_covariate_ids <- unique(suppressWarnings(as.numeric(excluded_covariate_ids)))
   excluded_covariate_ids <- excluded_covariate_ids[!is.na(excluded_covariate_ids)]
 
   list(
@@ -586,8 +602,8 @@ build_runtime_config <- function(input) {
 
 build_config_from_input <- function(input,
                                     connection_info,
-                                    forced_covariate_ids = integer(0),
-                                    excluded_covariate_ids = integer(0)) {
+                                    forced_covariate_ids = numeric(0),
+                                    excluded_covariate_ids = numeric(0)) {
   list(
     connection = build_connection_config(connection_info),
     cohorts = build_cohorts_config(input, connection_info),
@@ -607,25 +623,25 @@ build_config_from_input <- function(input,
 
 get_descendant_concept_ids <- function(connection, cdm_database_schema, concept_id, include_self = FALSE) {
   if (is.na(concept_id) || is.null(concept_id) || concept_id == 0) {
-    return(integer(0))
+    return(numeric(0))
   }
 
   if (include_self) {
     query <- sprintf(
       "SELECT DISTINCT descendant_concept_id FROM %s.concept_ancestor WHERE ancestor_concept_id = %d",
       cdm_database_schema,
-      as.integer(concept_id)
+      as.numeric(concept_id)
     )
   } else {
     query <- sprintf(
       "SELECT DISTINCT descendant_concept_id FROM %s.concept_ancestor WHERE ancestor_concept_id = %d AND min_levels_of_separation > 0",
       cdm_database_schema,
-      as.integer(concept_id)
+      as.numeric(concept_id)
     )
   }
 
   result <- DatabaseConnector::querySql(connection, query)
-  unique(as.integer(result[[1]]))
+  unique(as.numeric(result[[1]]))
 }
 
 get_concept_ancestors <- function(connection, concept_id, cdm_schema = "main") {
@@ -643,7 +659,7 @@ get_concept_ancestors <- function(connection, concept_id, cdm_schema = "main") {
      WHERE ca.descendant_concept_id = %d
        AND ca.min_levels_of_separation > 0
      ORDER BY ca.min_levels_of_separation ASC, ca.ancestor_concept_id ASC",
-    cdm_schema, as.integer(concept_id)
+    cdm_schema, as.numeric(concept_id)
   )
   
   DatabaseConnector::querySql(connection, query)
@@ -658,7 +674,7 @@ get_all_descendants_of_ancestor <- function(connection, ancestor_concept_id, cdm
     "SELECT DISTINCT descendant_concept_id
      FROM %s.concept_ancestor
      WHERE ancestor_concept_id = %d",
-    cdm_schema, as.integer(ancestor_concept_id)
+    cdm_schema, as.numeric(ancestor_concept_id)
   )
   
   descendants <- DatabaseConnector::querySql(connection, query)

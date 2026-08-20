@@ -253,11 +253,11 @@ server <- function(input, output, session) {
 
   update_covariate_picker_choices <- function() {
     catalog <- covariate_catalog()
-    
+
     if (is.null(catalog) || nrow(catalog) == 0) {
       return(invisible(NULL))
     }
-    
+
     choices <- build_covariate_choice_labels(catalog)
 
     updateSelectizeInput(
@@ -288,7 +288,7 @@ server <- function(input, output, session) {
   }
 
   add_covariates <- function(target_rv, new_ids) {
-    new_ids <- unique(as.integer(new_ids))
+    new_ids <- unique(as.numeric(new_ids))
     new_ids <- new_ids[!is.na(new_ids)]
     target_rv(sort(unique(c(target_rv(), new_ids))))
   }
@@ -311,9 +311,13 @@ server <- function(input, output, session) {
     refresh_cohort_json_choices()
   })
 
-  observeEvent(covariate_catalog(), {
-    update_covariate_picker_choices()
-  }, ignoreInit = TRUE, ignoreNULL = TRUE)
+  observeEvent(covariate_catalog(),
+    {
+      update_covariate_picker_choices()
+    },
+    ignoreInit = TRUE,
+    ignoreNULL = TRUE
+  )
 
   observeEvent(TRUE,
     {
@@ -438,19 +442,19 @@ server <- function(input, output, session) {
   observeEvent(input$forced_covariates_add_family, ignoreInit = TRUE, {
     req(!is.null(input$forced_covariates_search))
     req(active_connection_info())
-    
+
     selected_row <- find_covariate_catalog_row(covariate_catalog(), input$forced_covariates_search)
     if (is.null(selected_row)) {
       showNotification("Please select a covariate first.", type = "warning")
       return()
     }
-    
+
     concept_id <- selected_row$conceptId[[1]]
     if (is.na(concept_id) || is.null(concept_id) || concept_id == 0) {
       showNotification("This covariate has no associated concept ID.", type = "warning")
       return()
     }
-    
+
     connection_info <- active_connection_info()
     cfg <- build_config_from_input(
       input = input,
@@ -458,27 +462,27 @@ server <- function(input, output, session) {
       forced_covariate_ids = forced_covariate_ids(),
       excluded_covariate_ids = excluded_covariate_ids()
     )
-    
+
     conn <- create_db_connection(connection_info)
     on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
-    
+
     ancestors_raw <- get_concept_ancestors(
       connection = conn,
       concept_id = concept_id,
       cdm_schema = cfg$cm_data$cdm_database_schema
     )
-    
+
     if (nrow(ancestors_raw) == 0) {
       showNotification("No ancestors found for this concept.", type = "warning")
       return()
     }
-    
+
     ancestors <- get_ancestor_names_from_catalog(
       catalog_df = covariate_catalog(),
       ancestor_ids = ancestors_raw$ancestor_concept_id
     )
     ancestors$min_levels_of_separation <- ancestors_raw$min_levels_of_separation
-    
+
     output$forced_covariates_ancestor_selector <- renderUI({
       tagList(
         selectInput(
@@ -487,11 +491,12 @@ server <- function(input, output, session) {
           choices = setNames(
             ancestors$ancestor_concept_id,
             paste0(
-              ifelse(is.na(ancestors$ancestor_concept_name) | ancestors$ancestor_concept_name == "", 
-                     as.character(ancestors$ancestor_concept_id),
-                     ancestors$ancestor_concept_name),
-              " [", ancestors$ancestor_concept_id, "] (", 
-              ancestors$min_levels_of_separation, " level", 
+              ifelse(is.na(ancestors$ancestor_concept_name) | ancestors$ancestor_concept_name == "",
+                as.character(ancestors$ancestor_concept_id),
+                ancestors$ancestor_concept_name
+              ),
+              " [", ancestors$ancestor_concept_id, "] (",
+              ancestors$min_levels_of_separation, " level",
               ifelse(ancestors$min_levels_of_separation > 1, "s", ""), ")"
             )
           ),
@@ -507,12 +512,12 @@ server <- function(input, output, session) {
       )
     })
   })
-  
+
   observeEvent(input$forced_covariates_confirm_family, {
     req(!is.null(input$forced_covariates_selected_ancestor))
-    
-    ancestor_id <- as.integer(input$forced_covariates_selected_ancestor)
-    
+
+    ancestor_id <- as.numeric(input$forced_covariates_selected_ancestor)
+
     connection_info <- active_connection_info()
     cfg <- build_config_from_input(
       input = input,
@@ -520,45 +525,47 @@ server <- function(input, output, session) {
       forced_covariate_ids = forced_covariate_ids(),
       excluded_covariate_ids = excluded_covariate_ids()
     )
-    
+
     conn <- create_db_connection(connection_info)
     on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
-    
+
     descendants <- get_all_descendants_of_ancestor(
       connection = conn,
       ancestor_concept_id = ancestor_id,
       cdm_schema = cfg$cm_data$cdm_database_schema
     )
-    
+
     ids <- expand_covariates_from_descendant_concepts(
       catalog_df = covariate_catalog(),
       selected_covariate_id = input$forced_covariates_search,
       descendant_concept_ids = descendants
     )
-    
+
     add_covariates(forced_covariate_ids, ids)
     append_log("Forced covariates: added ", length(ids), " covariates from family.")
     showNotification(sprintf("Added %d covariates from family", length(ids)), type = "message")
-    
-    output$forced_covariates_ancestor_selector <- renderUI({ NULL })
+
+    output$forced_covariates_ancestor_selector <- renderUI({
+      NULL
+    })
   })
-  
+
   observeEvent(input$excluded_covariates_add_family, ignoreInit = TRUE, {
     req(!is.null(input$excluded_covariates_search))
     req(active_connection_info())
-    
+
     selected_row <- find_covariate_catalog_row(covariate_catalog(), input$excluded_covariates_search)
     if (is.null(selected_row)) {
       showNotification("Please select a covariate first.", type = "warning")
       return()
     }
-    
+
     concept_id <- selected_row$conceptId[[1]]
     if (is.na(concept_id) || is.null(concept_id) || concept_id == 0) {
       showNotification("This covariate has no associated concept ID.", type = "warning")
       return()
     }
-    
+
     connection_info <- active_connection_info()
     cfg <- build_config_from_input(
       input = input,
@@ -566,27 +573,27 @@ server <- function(input, output, session) {
       forced_covariate_ids = forced_covariate_ids(),
       excluded_covariate_ids = excluded_covariate_ids()
     )
-    
+
     conn <- create_db_connection(connection_info)
     on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
-    
+
     ancestors_raw <- get_concept_ancestors(
       connection = conn,
       concept_id = concept_id,
       cdm_schema = cfg$cm_data$cdm_database_schema
     )
-    
+
     if (nrow(ancestors_raw) == 0) {
       showNotification("No ancestors found for this concept.", type = "warning")
       return()
     }
-    
+
     ancestors <- get_ancestor_names_from_catalog(
       catalog_df = covariate_catalog(),
       ancestor_ids = ancestors_raw$ancestor_concept_id
     )
     ancestors$min_levels_of_separation <- ancestors_raw$min_levels_of_separation
-    
+
     output$excluded_covariates_ancestor_selector <- renderUI({
       tagList(
         selectInput(
@@ -595,11 +602,12 @@ server <- function(input, output, session) {
           choices = setNames(
             ancestors$ancestor_concept_id,
             paste0(
-              ifelse(is.na(ancestors$ancestor_concept_name) | ancestors$ancestor_concept_name == "", 
-                     as.character(ancestors$ancestor_concept_id),
-                     ancestors$ancestor_concept_name),
-              " [", ancestors$ancestor_concept_id, "] (", 
-              ancestors$min_levels_of_separation, " level", 
+              ifelse(is.na(ancestors$ancestor_concept_name) | ancestors$ancestor_concept_name == "",
+                as.character(ancestors$ancestor_concept_id),
+                ancestors$ancestor_concept_name
+              ),
+              " [", ancestors$ancestor_concept_id, "] (",
+              ancestors$min_levels_of_separation, " level",
               ifelse(ancestors$min_levels_of_separation > 1, "s", ""), ")"
             )
           ),
@@ -615,12 +623,12 @@ server <- function(input, output, session) {
       )
     })
   })
-  
+
   observeEvent(input$excluded_covariates_confirm_family, {
     req(!is.null(input$excluded_covariates_selected_ancestor))
-    
-    ancestor_id <- as.integer(input$excluded_covariates_selected_ancestor)
-    
+
+    ancestor_id <- as.numeric(input$excluded_covariates_selected_ancestor)
+
     connection_info <- active_connection_info()
     cfg <- build_config_from_input(
       input = input,
@@ -628,27 +636,29 @@ server <- function(input, output, session) {
       forced_covariate_ids = forced_covariate_ids(),
       excluded_covariate_ids = excluded_covariate_ids()
     )
-    
+
     conn <- create_db_connection(connection_info)
     on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
-    
+
     descendants <- get_all_descendants_of_ancestor(
       connection = conn,
       ancestor_concept_id = ancestor_id,
       cdm_schema = cfg$cm_data$cdm_database_schema
     )
-    
+
     ids <- expand_covariates_from_descendant_concepts(
       catalog_df = covariate_catalog(),
       selected_covariate_id = input$excluded_covariates_search,
       descendant_concept_ids = descendants
     )
-    
+
     add_covariates(excluded_covariate_ids, ids)
     append_log("Excluded covariates: added ", length(ids), " covariates from family.")
     showNotification(sprintf("Added %d covariates from family", length(ids)), type = "message")
-    
-    output$excluded_covariates_ancestor_selector <- renderUI({ NULL })
+
+    output$excluded_covariates_ancestor_selector <- renderUI({
+      NULL
+    })
   })
 
   observeEvent(input$forced_covariates_remove_selected, ignoreInit = TRUE, {
