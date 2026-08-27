@@ -504,21 +504,49 @@ build_study_population_config <- function() {
   )
 }
 
-build_covariate_screening_config <- function(input,
-                                            forced_covariate_ids = numeric(0),
-                                            excluded_covariate_ids = numeric(0)) {
-  forced_covariate_ids <- unique(suppressWarnings(as.numeric(forced_covariate_ids)))
-  forced_covariate_ids <- forced_covariate_ids[!is.na(forced_covariate_ids)]
+build_covariate_screening_config <- function(
+  input,
+  forced_covariate_ids = numeric(0),
+  excluded_covariate_ids = numeric(0)
+) {
+  forced_covariate_ids <- unique(
+    suppressWarnings(as.numeric(forced_covariate_ids))
+  )
+  forced_covariate_ids <- forced_covariate_ids[
+    !is.na(forced_covariate_ids)
+  ]
 
-  excluded_covariate_ids <- unique(suppressWarnings(as.numeric(excluded_covariate_ids)))
-  excluded_covariate_ids <- excluded_covariate_ids[!is.na(excluded_covariate_ids)]
+  excluded_covariate_ids <- unique(
+    suppressWarnings(as.numeric(excluded_covariate_ids))
+  )
+  excluded_covariate_ids <- excluded_covariate_ids[
+    !is.na(excluded_covariate_ids)
+  ]
+
+  number_of_runs <- as.integer(
+    input$screening_number_of_runs %||% 10
+  )
+  number_of_runs <- max(1L, number_of_runs)
+
+  min_selection_frequency <- as.integer(
+    input$screening_min_selection_frequency %||% 3
+  )
+  min_selection_frequency <- max(
+    1L,
+    min(min_selection_frequency, number_of_runs)
+  )
 
   list(
     enabled = isTRUE(input$screening_enabled),
-    number_of_runs = as.integer(input$screening_number_of_runs %||% 3),
+    number_of_runs = number_of_runs,
+    min_selection_frequency = min_selection_frequency,
     sample_fraction = 0.05,
-    min_subjects_per_group = as.integer(input$screening_min_subjects_per_group %||% 500),
-    top_covariates_per_run = as.integer(input$screening_top_covariates_per_run %||% 500),
+    min_subjects_per_group = as.integer(
+      input$screening_min_subjects_per_group %||% 500
+    ),
+    top_covariates_per_run = as.integer(
+      input$screening_top_covariates_per_run %||% 500
+    ),
     seed = 20260619,
     include_forced_covariates = length(forced_covariate_ids) > 0,
     forced_covariate_ids = forced_covariate_ids,

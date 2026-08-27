@@ -324,6 +324,13 @@ advanced_tuning_tab <- function() {
               numericInput(
                 "screening_number_of_runs",
                 "Number of screening runs",
+                value = 10,
+                min = 1,
+                step = 1
+              ),
+              numericInput(
+                "screening_min_selection_frequency",
+                "Minimum selections required across runs",
                 value = 3,
                 min = 1,
                 step = 1

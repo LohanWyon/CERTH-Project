@@ -335,40 +335,80 @@ save_analysis_outputs <- function(output_config,
   invisible(paths$final)
 }
 
-run_covariate_screening <- function(population,
-                                    cm_data,
-                                    covariate_screening_config,
-                                    output_config) {
+run_covariate_screening <- function(
+  population,
+  cm_data,
+  covariate_screening_config,
+  output_config
+) {
   paths <- get_output_paths(output_config)
 
   if (!isTRUE(covariate_screening_config$enabled)) {
-    return(list(selected_covariate_ids = NULL, screening_log = NULL))
+    return(list(
+      selected_covariate_ids = NULL,
+      screening_log = NULL,
+      selection_frequency = NULL
+    ))
   }
 
   treated_index <- which(population$treatment == 1)
   comparator_index <- which(population$treatment == 0)
 
   if (length(treated_index) == 0 || length(comparator_index) == 0) {
-    return(list(selected_covariate_ids = NULL, screening_log = NULL))
+    return(list(
+      selected_covariate_ids = NULL,
+      screening_log = NULL,
+      selection_frequency = NULL
+    ))
   }
 
+  number_of_runs <- max(
+    1L,
+    as.integer(covariate_screening_config$number_of_runs %||% 3L)
+  )
+
+  min_selection_frequency <- max(
+    1L,
+    min(
+      as.integer(
+        covariate_screening_config$min_selection_frequency %||% 1L
+      ),
+      number_of_runs
+    )
+  )
+
   set.seed(covariate_screening_config$seed)
-  selected_covariate_ids <- numeric(0)
+
+  # Named integer vector: number of prescreens selecting each covariate.
+  selection_counts <- integer(0)
   screening_log <- list()
 
-  for (run_id in seq_len(covariate_screening_config$number_of_runs)) {
+  for (run_id in seq_len(number_of_runs)) {
     treated_n <- max(
       covariate_screening_config$min_subjects_per_group,
       floor(length(treated_index) * covariate_screening_config$sample_fraction)
     )
+
     comparator_n <- max(
       covariate_screening_config$min_subjects_per_group,
       floor(length(comparator_index) * covariate_screening_config$sample_fraction)
     )
 
-    treated_sample <- sample(treated_index, size = min(treated_n, length(treated_index)))
-    comparator_sample <- sample(comparator_index, size = min(comparator_n, length(comparator_index)))
-    screening_population <- population[c(treated_sample, comparator_sample), , drop = FALSE]
+    treated_sample <- sample(
+      treated_index,
+      size = min(treated_n, length(treated_index))
+    )
+
+    comparator_sample <- sample(
+      comparator_index,
+      size = min(comparator_n, length(comparator_index))
+    )
+
+    screening_population <- population[
+      c(treated_sample, comparator_sample),
+      ,
+      drop = FALSE
+    ]
 
     screening_prior <- Cyclops::createPrior(
       priorType = "normal",
@@ -390,23 +430,32 @@ run_covariate_screening <- function(population,
       createPsArgs = screening_ps_args
     )
 
-    screening_coefficients <- extract_ps_model_coefficients(screening_ps, cm_data)
+    screening_coefficients <- extract_ps_model_coefficients(
+      screening_ps,
+      cm_data
+    )
 
-    if (is.null(screening_coefficients) || nrow(screening_coefficients) == 0) {
+    if (is.null(screening_coefficients) ||
+        nrow(screening_coefficients) == 0) {
       screening_log[[run_id]] <- data.frame(
         run_id = run_id,
         n_treated = sum(screening_population$treatment == 1, na.rm = TRUE),
         n_comparator = sum(screening_population$treatment == 0, na.rm = TRUE),
         n_selected_this_run = 0L,
-        n_selected_cumulative = length(selected_covariate_ids)
+        n_selected_cumulative = sum(selection_counts >= min_selection_frequency),
+        stringsAsFactors = FALSE
       )
       next
     }
 
-    max_abs_screening_coefficient <- covariate_screening_config$max_abs_screening_coefficient %||% 3
+    max_abs_screening_coefficient <- (
+      covariate_screening_config$max_abs_screening_coefficient %||% 3
+    )
+
     screening_coefficients <- screening_coefficients[
       is.finite(screening_coefficients$coefficient) &
-        abs(screening_coefficients$coefficient) <= max_abs_screening_coefficient,
+        abs(screening_coefficients$coefficient) <=
+          max_abs_screening_coefficient,
       ,
       drop = FALSE
     ]
@@ -415,35 +464,112 @@ run_covariate_screening <- function(population,
       as.numeric(screening_coefficients$covariateId),
       covariate_screening_config$top_covariates_per_run
     ))
+
     top_covariate_ids <- top_covariate_ids[!is.na(top_covariate_ids)]
 
-    selected_covariate_ids <- union(selected_covariate_ids, top_covariate_ids)
-    selected_covariate_ids <- as.numeric(selected_covariate_ids)
+    # Count each covariate at most once per screening run.
+    for (covariate_id in top_covariate_ids) {
+      covariate_key <- as.character(covariate_id)
+
+      if (!covariate_key %in% names(selection_counts)) {
+        selection_counts[covariate_key] <- 0L
+      }
+
+      selection_counts[covariate_key] <- selection_counts[covariate_key] + 1L
+    }
 
     screening_log[[run_id]] <- data.frame(
       run_id = run_id,
       n_treated = sum(screening_population$treatment == 1, na.rm = TRUE),
       n_comparator = sum(screening_population$treatment == 0, na.rm = TRUE),
       n_selected_this_run = length(top_covariate_ids),
-      n_selected_cumulative = length(selected_covariate_ids)
+      n_selected_cumulative = sum(
+        selection_counts >= min_selection_frequency
+      ),
+      stringsAsFactors = FALSE
     )
   }
 
+  # Keep covariates selected in at least K prescreening runs.
+  selected_covariate_ids <- as.numeric(
+    names(selection_counts)[
+      selection_counts >= min_selection_frequency
+    ]
+  )
+
+  selected_covariate_ids <- selected_covariate_ids[
+    !is.na(selected_covariate_ids)
+  ]
+
+  # Forced covariates remain included even if they fail stability selection.
   if (isTRUE(covariate_screening_config$include_forced_covariates)) {
-    forced_ids <- unique(as.numeric(covariate_screening_config$forced_covariate_ids))
+    forced_ids <- unique(
+      as.numeric(covariate_screening_config$forced_covariate_ids)
+    )
+
     forced_ids <- forced_ids[!is.na(forced_ids)]
-    selected_covariate_ids <- union(as.numeric(selected_covariate_ids), forced_ids)
+
+    selected_covariate_ids <- union(
+      selected_covariate_ids,
+      forced_ids
+    )
   }
 
-  screening_log_df <- if (length(screening_log) > 0) do.call(rbind, screening_log) else data.frame()
+  screening_log_df <- if (length(screening_log) > 0) {
+    do.call(rbind, screening_log)
+  } else {
+    data.frame()
+  }
 
-  if (isTRUE(output_config$save_dev_files) && nrow(screening_log_df) > 0) {
-    write_csv_safe(screening_log_df, file.path(paths$dev, "covariate_screening_log.csv"))
+  selection_frequency <- if (length(selection_counts) > 0) {
+    data.frame(
+      covariateId = as.numeric(names(selection_counts)),
+      times_selected = as.integer(selection_counts),
+      selection_frequency = as.numeric(selection_counts) / number_of_runs,
+      retained = as.integer(selection_counts) >= min_selection_frequency,
+      stringsAsFactors = FALSE
+    )
+  } else {
+    data.frame(
+      covariateId = numeric(0),
+      times_selected = integer(0),
+      selection_frequency = numeric(0),
+      retained = logical(0),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  selection_frequency <- selection_frequency[
+    order(
+      -selection_frequency$times_selected,
+      selection_frequency$covariateId
+    ),
+    ,
+    drop = FALSE
+  ]
+
+  if (isTRUE(output_config$save_dev_files)) {
+    if (nrow(screening_log_df) > 0) {
+      write_csv_safe(
+        screening_log_df,
+        file.path(paths$dev, "covariate_screening_log.csv")
+      )
+    }
+
+    write_csv_safe(
+      selection_frequency,
+      file.path(paths$dev, "covariate_selection_frequency.csv")
+    )
   }
 
   list(
-    selected_covariate_ids = if (length(selected_covariate_ids) == 0) NULL else as.numeric(selected_covariate_ids),
-    screening_log = screening_log_df
+    selected_covariate_ids = if (length(selected_covariate_ids) == 0) {
+      NULL
+    } else {
+      as.numeric(selected_covariate_ids)
+    },
+    screening_log = screening_log_df,
+    selection_frequency = selection_frequency
   )
 }
 
