@@ -1,7 +1,6 @@
 library(DatabaseConnector)
 library(CDMConnector)
 
-# Se connecter à la DB Eunomia 110k
 conn_details <- DatabaseConnector::createConnectionDetails(
   dbms = "duckdb",
   server = CDMConnector::eunomiaDir(datasetName = "synpuf-110k")
@@ -9,12 +8,32 @@ conn_details <- DatabaseConnector::createConnectionDetails(
 
 conn <- DatabaseConnector::connect(conn_details)
 
-# Supprimer la table cohort
-DatabaseConnector::executeSql(conn, "DROP TABLE IF EXISTS main.cohort")
-DatabaseConnector::executeSql(conn, "DROP TABLE IF EXISTS main.cohort_inclusion")
-DatabaseConnector::executeSql(conn, "DROP TABLE IF EXISTS main.cohort_inclusion_result")
-DatabaseConnector::executeSql(conn, "DROP TABLE IF EXISTS main.cohort_inclusion_stats")
-DatabaseConnector::executeSql(conn, "DROP TABLE IF EXISTS main.cohort_summary_stats")
-DatabaseConnector::executeSql(conn, "DROP TABLE IF EXISTS main.cohort_censor_stats")
+cohort_tables <- c(
+  "main.cohort",
+  "main.cohort_inclusion",
+  "main.cohort_inclusion_result",
+  "main.cohort_inclusion_stats",
+  "main.cohort_summary_stats",
+  "main.cohort_censor_stats",
+  "main.cohort_subset_attrition",
+  "main.cohort_checksum"
+)
 
-DatabaseConnector::disconnect(conn)
+tryCatch(
+  {
+    for (table_name in cohort_tables) {
+      message("Dropping: ", table_name)
+
+      DatabaseConnector::executeSql(
+        conn,
+        paste("DROP TABLE IF EXISTS", table_name)
+      )
+    }
+
+    message("Cohort tables deleted.")
+  },
+  finally = {
+    DatabaseConnector::disconnect(conn)
+    message("Connection closed.")
+  }
+)

@@ -1,5 +1,6 @@
 # R/ui_tabs.R
 
+
 cohort_json_selector_ui <- function(prefix, label) {
   tagList(
     selectInput(
@@ -35,6 +36,7 @@ cohort_json_selector_ui <- function(prefix, label) {
     )
   )
 }
+
 
 configuration_tab <- function() {
   tabPanel(
@@ -117,120 +119,121 @@ configuration_tab <- function() {
           fluidRow(
             column(
               6,
-                tags$label("Forced covariates"),
-                fluidRow(
-                  column(
-                    8,
-                    selectizeInput(
-                      "forced_covariates_search",
-                      "Search covariates",
-                      choices = NULL,
-                      selected = NULL,
-                      options = list(
-                        placeholder = "Type covariate name or ID...",
-                        onInitialize = I("function() { this.settings.maxItems = 1; }")
-                      )
-                    )
-                  ),
-                  column(
-                    4,
-                    actionButton(
-                      "forced_covariates_add",
-                      "Add selected",
-                      class = "btn-success btn-sm"
+              tags$label("Forced covariates"),
+              fluidRow(
+                column(
+                  8,
+                  selectizeInput(
+                    "forced_covariates_search",
+                    "Search covariates",
+                    choices = NULL,
+                    selected = NULL,
+                    options = list(
+                      placeholder = "Type covariate name or ID...",
+                      onInitialize = I("function() { this.settings.maxItems = 1; }")
                     )
                   )
                 ),
-                br(),
-                actionButton(
-                  "forced_covariates_add_same_concept",
-                  "Add same concept",
-                  class = "btn-info btn-sm"
-                ),
-                actionButton(
-                  "forced_covariates_add_family",
-                  "Add family",
-                  class = "btn-info btn-sm",
-                  icon = icon("sitemap")
-                ),
-                uiOutput("forced_covariates_ancestor_selector"),
-                br(),
-                DT::dataTableOutput("forced_covariates_selected_table"),
-                br(),
-                actionButton(
-                  "forced_covariates_remove_selected",
-                  "Remove selected",
-                  class = "btn-warning btn-sm"
-                ),
-                actionButton(
-                  "forced_covariates_clear",
-                  "Clear all",
-                  class = "btn-danger btn-sm"
-                ),
-                helpText("Add covariates to force inclusion in the model.")
+                column(
+                  4,
+                  actionButton(
+                    "forced_covariates_add",
+                    "Add selected",
+                    class = "btn-success btn-sm"
+                  )
+                )
               ),
-              column(
-                6,
-                tags$label("Excluded covariates"),
-                fluidRow(
-                  column(
-                    8,
-                    selectizeInput(
-                      "excluded_covariates_search",
-                      "Search covariates",
-                      choices = NULL,
-                      selected = NULL,
-                      options = list(
-                        placeholder = "Type covariate name or ID...",
-                        onInitialize = I("function() { this.settings.maxItems = 1; }")
-                      )
-                    )
-                  ),
-                  column(
-                    4,
-                    actionButton(
-                      "excluded_covariates_add",
-                      "Add selected",
-                      class = "btn-success btn-sm"
+              br(),
+              actionButton(
+                "forced_covariates_add_same_concept",
+                "Add same concept",
+                class = "btn-info btn-sm"
+              ),
+              actionButton(
+                "forced_covariates_add_family",
+                "Add family",
+                class = "btn-info btn-sm",
+                icon = icon("sitemap")
+              ),
+              uiOutput("forced_covariates_ancestor_selector"),
+              br(),
+              DT::dataTableOutput("forced_covariates_selected_table"),
+              br(),
+              actionButton(
+                "forced_covariates_remove_selected",
+                "Remove selected",
+                class = "btn-warning btn-sm"
+              ),
+              actionButton(
+                "forced_covariates_clear",
+                "Clear all",
+                class = "btn-danger btn-sm"
+              ),
+              helpText("Add covariates to force inclusion in the model.")
+            ),
+            column(
+              6,
+              tags$label("Excluded covariates"),
+              fluidRow(
+                column(
+                  8,
+                  selectizeInput(
+                    "excluded_covariates_search",
+                    "Search covariates",
+                    choices = NULL,
+                    selected = NULL,
+                    options = list(
+                      placeholder = "Type covariate name or ID...",
+                      onInitialize = I("function() { this.settings.maxItems = 1; }")
                     )
                   )
                 ),
-                br(),
-                actionButton(
-                  "excluded_covariates_add_same_concept",
-                  "Add same concept",
-                  class = "btn-info btn-sm"
-                ),
-                actionButton(
-                  "excluded_covariates_add_family",
-                  "Add family",
-                  class = "btn-info btn-sm",
-                  icon = icon("sitemap")
-                ),
-                uiOutput("excluded_covariates_ancestor_selector"),
-                br(),
-                DT::dataTableOutput("excluded_covariates_selected_table"),
-                br(),
-                actionButton(
-                  "excluded_covariates_remove_selected",
-                  "Remove selected",
-                  class = "btn-warning btn-sm"
-                ),
-                actionButton(
-                  "excluded_covariates_clear",
-                  "Clear all",
-                  class = "btn-danger btn-sm"
-                ),
-                helpText("Add covariates to exclude from the model.")
-              )
-            ),
-            br(),
-            helpText("Use the search box to find covariates by name or ID.")
+                column(
+                  4,
+                  actionButton(
+                    "excluded_covariates_add",
+                    "Add selected",
+                    class = "btn-success btn-sm"
+                  )
+                )
+              ),
+              br(),
+              actionButton(
+                "excluded_covariates_add_same_concept",
+                "Add same concept",
+                class = "btn-info btn-sm"
+              ),
+              actionButton(
+                "excluded_covariates_add_family",
+                "Add family",
+                class = "btn-info btn-sm",
+                icon = icon("sitemap")
+              ),
+              uiOutput("excluded_covariates_ancestor_selector"),
+              br(),
+              DT::dataTableOutput("excluded_covariates_selected_table"),
+              br(),
+              actionButton(
+                "excluded_covariates_remove_selected",
+                "Remove selected",
+                class = "btn-warning btn-sm"
+              ),
+              actionButton(
+                "excluded_covariates_clear",
+                "Clear all",
+                class = "btn-danger btn-sm"
+              ),
+              helpText("Add covariates to exclude from the model.")
+            )
+          ),
+          br(),
+          helpText("Use the search box to find covariates by name or ID.")
         )
       )
     )
   )
 }
+
 
 advanced_tuning_tab <- function() {
   tabPanel(
@@ -545,6 +548,7 @@ advanced_tuning_tab <- function() {
   )
 }
 
+
 execution_tab <- function() {
   tabPanel(
     title = "Execution",
@@ -601,6 +605,7 @@ execution_tab <- function() {
   )
 }
 
+
 results_tab <- function() {
   tabPanel(
     title = "Results",
@@ -611,34 +616,58 @@ results_tab <- function() {
         tabPanel(
           "Summary",
           br(),
-          tableOutput("analysis_summary_table"),
+          DT::dataTableOutput("analysis_summary_table"),
           br(),
-          tableOutput("matching_summary_table")
+          DT::dataTableOutput("matching_summary_table")
         ),
         tabPanel(
           "Propensity score",
           br(),
-          plotlyOutput("ps_distribution_plot_before"),
+          plotlyOutput("ps_distribution_plot_before", height = "550px"),
           br(),
-          plotlyOutput("ps_distribution_plot_after")
+          plotlyOutput("ps_distribution_plot_after", height = "550px")
         ),
         tabPanel(
           "Covariate balance",
           br(),
-          plotlyOutput("smd_plot_before"),
+          plotlyOutput("smd_plot_before", height = "750px"),
           br(),
-          plotlyOutput("smd_plot_after")
+          plotlyOutput("smd_plot_after", height = "750px")
         ),
         tabPanel(
           "Outcome diagnostics",
           br(),
-          plotlyOutput("kaplan_meier_plot"),
-          br(),
-          tableOutput("ph_diagnostics_table")
+          uiOutput("kaplan_meier_ui")
         ),
         tabPanel(
           "Files",
           br(),
+          fluidRow(
+            column(
+              8,
+              selectInput(
+                "result_file_choice",
+                "Available result files",
+                choices = character(0)
+              )
+            ),
+            column(
+              4,
+              br(),
+              downloadButton(
+                "download_selected_result_file",
+                "Download selected file",
+                class = "w-100"
+              )
+            )
+          ),
+          br(),
+          downloadButton(
+            "download_all_result_files",
+            "Download all final results (.zip)",
+            class = "btn-primary"
+          ),
+          br(), br(),
           uiOutput("results_files_ui")
         )
       )

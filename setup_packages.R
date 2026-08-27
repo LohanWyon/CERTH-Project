@@ -5,7 +5,9 @@ cran_packages <- c(
   "bslib",
   "DT",
   "readr",
-  "plotly"
+  "plotly",
+  "dplyr",
+  "base64enc"
 )
 
 ohdsi_packages <- c(

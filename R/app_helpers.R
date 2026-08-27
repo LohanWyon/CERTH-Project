@@ -90,6 +90,16 @@ list_available_cohort_json_files <- function(folder) {
   )
 }
 
+ensure_json_extension <- function(file_name) {
+  if (is.null(file_name) || length(file_name) == 0 || is.na(file_name)) {
+    stop("file_name is NULL or empty")
+  }
+  if (!grepl("\\.json$", file_name, ignore.case = TRUE)) {
+    file_name <- paste0(file_name, ".json")
+  }
+  file_name
+}
+
 save_cohort_json_file <- function(folder, file_name, json_text, overwrite = FALSE) {
   ensure_dir(folder)
 
@@ -480,17 +490,17 @@ build_cm_data_config <- function(input, connection_info) {
 build_study_population_config <- function() {
   list(
     first_exposure_only = TRUE,
-    washout_period = 0,
-    remove_subjects_with_prior_outcome = FALSE,
-    prior_outcome_lookback = 0,
+    washout_period = 365,
+    remove_subjects_with_prior_outcome = TRUE,
+    prior_outcome_lookback = 365,
     require_time_at_risk = TRUE,
     min_time_at_risk = 1,
     risk_window_start = 1,
     start_anchor = "cohort start",
     risk_window_end = 365,
     end_anchor = "cohort start",
-    remove_duplicate_subjects = "keep first",
-    restrict_to_common_period = FALSE
+    remove_duplicate_subjects = "keep first, truncate to second",
+    restrict_to_common_period = TRUE
   )
 }
 
@@ -515,7 +525,8 @@ build_covariate_screening_config <- function(input,
     exclude_artefactual_covariates = length(excluded_covariate_ids) > 0,
     excluded_covariate_ids = excluded_covariate_ids,
     auto_exclude_high_correlation_covariates = TRUE,
-    high_correlation_threshold = 0.999
+    high_correlation_threshold = 0.95,
+    max_abs_screening_coefficient = 3
   )
 }
 
@@ -525,7 +536,7 @@ build_ps_model_config <- function() {
     max_cohort_size_for_fitting = 250000,
     use_cross_validation = TRUE,
     prior_type = "laplace",
-    prior_variance = 0.01
+    prior_variance = 1
   )
 }
 

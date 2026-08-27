@@ -26,25 +26,18 @@ ensure_dir <- function(path) {
 }
 
 `%||%` <- function(a, b) {
-  if (is.null(a) || length(a) == 0 || all(is.na(a))) {
-    return(b)
-  }
-  a
+  if (is.null(a) || length(a) == 0 || all(is.na(a))) b else a
 }
 
 write_csv_safe <- function(x, path) {
-  if (is.null(x)) {
-    return(invisible(NULL))
-  }
+  if (is.null(x)) return(invisible(NULL))
   ensure_dir(dirname(path))
   readr::write_csv(x, path)
   invisible(path)
 }
 
 save_rds_safe <- function(x, path) {
-  if (is.null(x)) {
-    return(invisible(NULL))
-  }
+  if (is.null(x)) return(invisible(NULL))
   ensure_dir(dirname(path))
   saveRDS(x, path)
   invisible(path)
@@ -56,20 +49,10 @@ get_output_paths <- function(output_config) {
   debug_dir <- output_config$debug_output_folder %||% file.path(final_dir, "debug")
 
   ensure_dir(final_dir)
+  if (isTRUE(output_config$save_dev_files)) ensure_dir(dev_dir)
+  if (isTRUE(output_config$save_debug_files)) ensure_dir(debug_dir)
 
-  if (isTRUE(output_config$save_dev_files)) {
-    ensure_dir(dev_dir)
-  }
-
-  if (isTRUE(output_config$save_debug_files)) {
-    ensure_dir(debug_dir)
-  }
-
-  list(
-    final = final_dir,
-    dev = dev_dir,
-    debug = debug_dir
-  )
+  list(final = final_dir, dev = dev_dir, debug = debug_dir)
 }
 
 read_json_text <- function(path) {
@@ -88,7 +71,6 @@ create_connection_details <- function(connection_config) {
     port = connection_config$port,
     pathToDriver = connection_config$path_to_driver
   )
-
   args <- args[!vapply(args, is.null, logical(1))]
   do.call(DatabaseConnector::createConnectionDetails, args)
 }
@@ -106,9 +88,7 @@ create_ps_prior <- function(ps_model_config) {
 generate_cohorts_if_requested <- function(connection_details,
                                           cohorts_config,
                                           cm_data_config) {
-  if (!isTRUE(cohorts_config$generate_cohorts_from_json)) {
-    return(invisible(NULL))
-  }
+  if (!isTRUE(cohorts_config$generate_cohorts_from_json)) return(invisible(NULL))
 
   required_jsons <- c(
     cohorts_config$target_json_file,
@@ -221,8 +201,6 @@ build_study_population <- function(cm_data,
                                    cohorts_config,
                                    study_population_config,
                                    output_config) {
-  paths <- get_output_paths(output_config)
-
   study_population_args <- CohortMethod::createCreateStudyPopulationArgs(
     removeSubjectsWithPriorOutcome = study_population_config$remove_subjects_with_prior_outcome,
     priorOutcomeLookback = study_population_config$prior_outcome_lookback,
@@ -242,10 +220,6 @@ build_study_population <- function(cm_data,
     stop("Study population is empty after applying inclusion and exclusion criteria.")
   }
 
-  if (isTRUE(output_config$save_dev_files)) {
-    save_rds_safe(study_population, file.path(paths$dev, "study_population.rds"))
-  }
-
   study_population
 }
 
@@ -255,17 +229,110 @@ extract_ps_model_coefficients <- function(ps_object, cm_data) {
     cohortMethodData = cm_data
   )
 
-  if (is.null(ps_model) || nrow(ps_model) == 0) {
+  if (is.null(ps_model) || nrow(ps_model) == 0 ||
+      !("coefficient" %in% names(ps_model)) ||
+      !("covariateId" %in% names(ps_model))) {
     return(NULL)
   }
 
-  if (!("coefficient" %in% names(ps_model)) || !("covariateId" %in% names(ps_model))) {
-    return(NULL)
-  }
-
-  ps_model$abs_coefficient <- abs(ps_model$coefficient)
   ps_model <- ps_model[ps_model$covariateId != 0, , drop = FALSE]
+  ps_model$abs_coefficient <- abs(ps_model$coefficient)
   ps_model[order(-ps_model$abs_coefficient), , drop = FALSE]
+}
+
+export_propensity_score_population <- function(population) {
+  if (is.null(population) || !is.data.frame(population)) return(NULL)
+
+  score_column <- intersect(c("propensityScore", "propensity_score", "ps"), names(population))
+  treatment_column <- intersect(c("treatment", "treatmentGroup", "exposure"), names(population))
+
+  if (length(score_column) == 0 || length(treatment_column) == 0) return(NULL)
+
+  out <- data.frame(
+    treatment = population[[treatment_column[1]]],
+    propensity_score = population[[score_column[1]]]
+  )
+
+  if ("rowId" %in% names(population)) out$rowId <- population$rowId
+  if ("stratumId" %in% names(population)) out$stratumId <- population$stratumId
+
+  out
+}
+
+save_kaplan_meier_plot <- function(adjusted_population, output_folder) {
+  if (is.null(adjusted_population) || nrow(adjusted_population) == 0) return(FALSE)
+
+  output_file <- file.path(output_folder, "kaplan_meier.png")
+
+  tryCatch({
+    CohortMethod::plotKaplanMeier(
+      population = adjusted_population,
+      censorMarks = FALSE,
+      confidenceIntervals = TRUE,
+      includeZero = FALSE,
+      dataTable = TRUE,
+      dataCutoff = 0.9,
+      targetLabel = "Target",
+      comparatorLabel = "Comparator",
+      title = "Kaplan-Meier survival curve after matching",
+      fileName = output_file
+    )
+    file.exists(output_file)
+  }, error = function(e) FALSE)
+}
+
+save_analysis_outputs <- function(output_config,
+                                  analysis_summary,
+                                  matching_summary,
+                                  ps_before_matching,
+                                  ps_after_matching,
+                                  adjusted_population,
+                                  covariate_balance,
+                                  ps_model_coefficients,
+                                  pipeline_artifacts) {
+  paths <- get_output_paths(output_config)
+
+  write_csv_safe(analysis_summary, file.path(paths$final, "analysis_summary.csv"))
+  write_csv_safe(matching_summary, file.path(paths$final, "matching_summary.csv"))
+  write_csv_safe(
+    export_propensity_score_population(ps_before_matching),
+    file.path(paths$final, "ps_before_matching.csv")
+  )
+  write_csv_safe(
+    export_propensity_score_population(ps_after_matching),
+    file.path(paths$final, "ps_after_matching.csv")
+  )
+  write_csv_safe(covariate_balance, file.path(paths$final, "covariate_balance.csv"))
+
+  if (!is.null(ps_model_coefficients) && nrow(ps_model_coefficients) > 0) {
+    write_csv_safe(
+      ps_model_coefficients,
+      file.path(paths$final, "ps_model_coefficients.csv")
+    )
+  }
+
+  if (!is.null(pipeline_artifacts$outcome_model)) {
+    outcome_estimate <- pipeline_artifacts$outcome_model$outcomeModelTreatmentEstimate
+    if (!is.null(outcome_estimate) && is.data.frame(outcome_estimate)) {
+      write_csv_safe(
+        outcome_estimate,
+        file.path(paths$final, "outcome_model_estimate.csv")
+      )
+    }
+  }
+
+  save_kaplan_meier_plot(
+    adjusted_population = adjusted_population,
+    output_folder = paths$final
+  )
+
+  if (isTRUE(output_config$save_dev_files)) {
+    save_rds_safe(adjusted_population, file.path(paths$dev, "adjusted_population.rds"))
+    save_rds_safe(covariate_balance, file.path(paths$dev, "covariate_balance.rds"))
+    save_rds_safe(pipeline_artifacts, file.path(paths$dev, "pipeline_artifacts.rds"))
+  }
+
+  invisible(paths$final)
 }
 
 run_covariate_screening <- function(population,
@@ -286,7 +353,7 @@ run_covariate_screening <- function(population,
   }
 
   set.seed(covariate_screening_config$seed)
-  selected_covariate_ids <- integer(0)
+  selected_covariate_ids <- numeric(0)
   screening_log <- list()
 
   for (run_id in seq_len(covariate_screening_config$number_of_runs)) {
@@ -336,6 +403,14 @@ run_covariate_screening <- function(population,
       next
     }
 
+    max_abs_screening_coefficient <- covariate_screening_config$max_abs_screening_coefficient %||% 3
+    screening_coefficients <- screening_coefficients[
+      is.finite(screening_coefficients$coefficient) &
+        abs(screening_coefficients$coefficient) <= max_abs_screening_coefficient,
+      ,
+      drop = FALSE
+    ]
+
     top_covariate_ids <- unique(utils::head(
       as.numeric(screening_coefficients$covariateId),
       covariate_screening_config$top_covariates_per_run
@@ -355,22 +430,19 @@ run_covariate_screening <- function(population,
   }
 
   if (isTRUE(covariate_screening_config$include_forced_covariates)) {
-    forced_ids <- unique(as.integer(covariate_screening_config$forced_covariate_ids))
+    forced_ids <- unique(as.numeric(covariate_screening_config$forced_covariate_ids))
     forced_ids <- forced_ids[!is.na(forced_ids)]
-    selected_covariate_ids <- union(as.integer(selected_covariate_ids), forced_ids)
+    selected_covariate_ids <- union(as.numeric(selected_covariate_ids), forced_ids)
   }
 
   screening_log_df <- if (length(screening_log) > 0) do.call(rbind, screening_log) else data.frame()
 
   if (isTRUE(output_config$save_dev_files) && nrow(screening_log_df) > 0) {
-    write_csv_safe(
-      screening_log_df,
-      file.path(paths$dev, "covariate_screening_log.csv")
-    )
+    write_csv_safe(screening_log_df, file.path(paths$dev, "covariate_screening_log.csv"))
   }
 
   list(
-    selected_covariate_ids = if (length(selected_covariate_ids) == 0) NULL else as.integer(selected_covariate_ids),
+    selected_covariate_ids = if (length(selected_covariate_ids) == 0) NULL else as.numeric(selected_covariate_ids),
     screening_log = screening_log_df
   )
 }
@@ -385,12 +457,10 @@ find_high_correlation_covariates <- function(cm_data,
 
   debug_dir <- output_folder %||% "output/ple_analysis/debug"
   ensure_dir(debug_dir)
-
   debug_file <- file.path(debug_dir, "debug_covariate_corr_debug.txt")
 
   safe_log <- function(...) {
-    msg <- paste(..., collapse = "")
-    cat(msg, "\n", file = debug_file, append = TRUE)
+    cat(paste(..., collapse = ""), "\n", file = debug_file, append = TRUE)
   }
 
   if (is.null(covariates)) {
@@ -402,120 +472,102 @@ find_high_correlation_covariates <- function(cm_data,
     dplyr::select(rowId, covariateId) |>
     dplyr::collect()
 
-  safe_log("nrow(covariates_df) = ", nrow(covariates_df))
-
-  covariates_df <- covariates_df[!is.na(covariates_df$rowId) & !is.na(covariates_df$covariateId), , drop = FALSE]
-  safe_log("nrow(covariates_df) after NA filter = ", nrow(covariates_df))
+  covariates_df$rowId <- as.numeric(covariates_df$rowId)
+  covariates_df$covariateId <- as.numeric(covariates_df$covariateId)
+  covariates_df <- covariates_df[
+    !is.na(covariates_df$rowId) & !is.na(covariates_df$covariateId),
+    , drop = FALSE
+  ]
 
   if (nrow(covariates_df) == 0) {
-    safe_log("covariates_df is empty after NA filter")
+    safe_log("covariates_df is empty after filtering")
     return(data.frame())
   }
 
-  required_population_columns <- c("rowId", "treatment")
-  if (!all(required_population_columns %in% names(population))) {
-    safe_log(
-      "population is missing required columns: ",
-      paste(setdiff(required_population_columns, names(population)), collapse = ", ")
-    )
+  if (!all(c("rowId", "treatment") %in% names(population))) {
+    safe_log("population is missing rowId or treatment")
     return(data.frame())
   }
 
-  population_sub <- population[, required_population_columns, drop = FALSE]
-  population_sub <- population_sub[!is.na(population_sub$rowId) & !is.na(population_sub$treatment), , drop = FALSE]
-  safe_log("nrow(population_sub) initial = ", nrow(population_sub))
-
+  population_sub <- population[, c("rowId", "treatment"), drop = FALSE]
+  population_sub$rowId <- as.numeric(population_sub$rowId)
+  population_sub$treatment <- as.numeric(population_sub$treatment)
+  population_sub <- population_sub[
+    !is.na(population_sub$rowId) & !is.na(population_sub$treatment),
+    , drop = FALSE
+  ]
   population_sub <- population_sub[population_sub$rowId %in% covariates_df$rowId, , drop = FALSE]
-  safe_log("nrow(population_sub) after rowId match = ", nrow(population_sub))
 
   if (nrow(population_sub) == 0) {
-    safe_log("population_sub empty after rowId matching")
+    safe_log("population_sub is empty after rowId matching")
     return(data.frame())
   }
 
   covariate_pairs <- unique(covariates_df[, c("rowId", "covariateId"), drop = FALSE])
 
-  if (!is.null(covariate_ref)) {
+  if (!is.null(covariate_ref) && !is.null(analysis_id_filter)) {
     covariate_ref_names <- colnames(covariate_ref)
-
-    if ("covariateId" %in% covariate_ref_names &&
-        !is.null(analysis_id_filter) &&
-        "analysisId" %in% covariate_ref_names) {
+    if ("covariateId" %in% covariate_ref_names && "analysisId" %in% covariate_ref_names) {
       keep_ids <- covariate_ref |>
-        dplyr::filter(.data$analysisId %in% analysis_id_filter) |>
-        dplyr::select(.data$covariateId) |>
+        dplyr::filter(analysisId %in% analysis_id_filter) |>
+        dplyr::select(covariateId) |>
         dplyr::collect() |>
-        dplyr::pull(.data$covariateId)
+        dplyr::pull(covariateId)
 
-      keep_ids <- as.numeric(keep_ids)
+      keep_ids <- unique(as.numeric(keep_ids))
       keep_ids <- keep_ids[!is.na(keep_ids)]
-
-      safe_log("Using analysis_id_filter; length(keep_ids) = ", length(keep_ids))
-
-      covariate_pairs <- covariate_pairs[covariate_pairs$covariateId %in% keep_ids, , drop = FALSE]
+      covariate_pairs <- covariate_pairs[
+        covariate_pairs$covariateId %in% keep_ids,
+        , drop = FALSE
+      ]
     }
   }
 
-  covariate_ids <- sort(unique(covariate_pairs$covariateId))
+  covariate_ids <- sort(unique(as.numeric(covariate_pairs$covariateId)))
   covariate_ids <- covariate_ids[!is.na(covariate_ids)]
-  safe_log("length(covariate_ids) = ", length(covariate_ids))
 
   if (length(covariate_ids) == 0) {
-    safe_log("No covariate_ids to process")
+    safe_log("No covariate IDs available after filtering")
     return(data.frame())
   }
 
-  out <- vector("list", length(covariate_ids))
+  results <- vector("list", length(covariate_ids))
 
   for (i in seq_along(covariate_ids)) {
-    current_id <- covariate_ids[i]
-    present_row_ids <- covariate_pairs$rowId[covariate_pairs$covariateId == current_id]
+    covariate_id <- covariate_ids[i]
+    present_row_ids <- covariate_pairs$rowId[covariate_pairs$covariateId == covariate_id]
+    covariate_value <- as.integer(population_sub$rowId %in% present_row_ids)
+    treatment_value <- population_sub$treatment
 
-    x <- as.integer(population_sub$rowId %in% present_row_ids)
-    y <- population_sub$treatment
-
-    if (length(unique(x)) < 2 || length(unique(y)) < 2) {
-      correlation <- NA_real_
+    correlation <- if (length(unique(covariate_value)) < 2 || length(unique(treatment_value)) < 2) {
+      NA_real_
     } else {
-      correlation <- suppressWarnings(stats::cor(x, y, method = "pearson"))
+      suppressWarnings(stats::cor(covariate_value, treatment_value, method = "pearson"))
     }
 
-    mean_0 <- mean(x[y == 0], na.rm = TRUE)
-    mean_1 <- mean(x[y == 1], na.rm = TRUE)
-
-    out[[i]] <- data.frame(
-      covariateId = current_id,
-      mean_0 = mean_0,
-      mean_1 = mean_1,
+    results[[i]] <- data.frame(
+      covariateId = as.numeric(covariate_id),
+      mean_0 = mean(covariate_value[treatment_value == 0], na.rm = TRUE),
+      mean_1 = mean(covariate_value[treatment_value == 1], na.rm = TRUE),
       correlation = correlation
     )
   }
 
-  out <- do.call(rbind, out)
+  results <- do.call(rbind, results)
+  if (is.null(results) || nrow(results) == 0) return(data.frame())
 
-  if (is.null(out) || !is.data.frame(out) || nrow(out) == 0) {
-    safe_log("out is empty after loop")
-    return(data.frame())
+  results <- results[
+    is.finite(results$correlation) & abs(results$correlation) >= threshold,
+    , drop = FALSE
+  ]
+  results <- results[order(-abs(results$correlation), -pmax(results$mean_0, results$mean_1)), , drop = FALSE]
+  rownames(results) <- NULL
+
+  if (!is.null(output_folder)) {
+    write_csv_safe(results, file.path(debug_dir, "debug_high_correlation_covariates.csv"))
   }
 
-  out_all <- out[order(-abs(out$correlation)), , drop = FALSE]
-  rownames(out_all) <- NULL
-
-  write_csv_safe(
-    out_all,
-    file.path(debug_dir, "debug_all_covariate_correlations.csv")
-  )
-
-  out_sel <- out[is.finite(out$correlation) & abs(out$correlation) >= threshold, , drop = FALSE]
-  safe_log("nrow(out_all) = ", nrow(out_all), " ; nrow(out_sel) = ", nrow(out_sel))
-
-  if (nrow(out_sel) == 0) {
-    return(out_sel)
-  }
-
-  out_sel <- out_sel[order(-abs(out_sel$correlation), -pmax(out_sel$mean_0, out_sel$mean_1)), , drop = FALSE]
-  rownames(out_sel) <- NULL
-  out_sel
+  results
 }
 
 fit_ps_model <- function(population,
@@ -533,7 +585,7 @@ fit_ps_model <- function(population,
   )
 
   high_correlation_table <- data.frame()
-  auto_excluded_covariate_ids <- integer(0)
+  auto_excluded_covariate_ids <- numeric(0)
 
   if (isTRUE(covariate_screening_config$auto_exclude_high_correlation_covariates)) {
     debug_output_folder <- if (isTRUE(output_config$save_debug_files)) paths$debug else NULL
@@ -541,87 +593,68 @@ fit_ps_model <- function(population,
     high_correlation_table <- find_high_correlation_covariates(
       cm_data = cm_data,
       population = population,
-      threshold = covariate_screening_config$high_correlation_threshold %||% 0.99,
+      threshold = covariate_screening_config$high_correlation_threshold %||% 0.95,
       output_folder = debug_output_folder,
       analysis_id_filter = c(410, 412, 413)
     )
 
     if (!is.null(high_correlation_table) && nrow(high_correlation_table) > 0) {
-      auto_excluded_covariate_ids <- unique(as.integer(high_correlation_table$covariateId))
+      auto_excluded_covariate_ids <- unique(as.numeric(high_correlation_table$covariateId))
       auto_excluded_covariate_ids <- auto_excluded_covariate_ids[!is.na(auto_excluded_covariate_ids)]
     }
   }
 
-  manual_excluded_covariate_ids <- integer(0)
+  manual_excluded_covariate_ids <- numeric(0)
   if (isTRUE(covariate_screening_config$exclude_artefactual_covariates)) {
-    manual_excluded_covariate_ids <- unique(as.integer(covariate_screening_config$excluded_covariate_ids))
+    manual_excluded_covariate_ids <- unique(as.numeric(covariate_screening_config$excluded_covariate_ids))
     manual_excluded_covariate_ids <- manual_excluded_covariate_ids[!is.na(manual_excluded_covariate_ids)]
-  }
-
-  message(
-    "Auto-excluded covariate IDs: ",
-    if (length(auto_excluded_covariate_ids) == 0) "<none>" else paste(auto_excluded_covariate_ids, collapse = ", ")
-  )
-
-  message(
-    "Manually excluded covariate IDs: ",
-    if (length(manual_excluded_covariate_ids) == 0) "<none>" else paste(manual_excluded_covariate_ids, collapse = ", ")
-  )
-
-  if (isTRUE(output_config$save_debug_files)) {
-    write_csv_safe(
-      high_correlation_table,
-      file.path(paths$debug, "debug_high_correlation_table.csv")
-    )
-
-    if (length(auto_excluded_covariate_ids) > 0) {
-      write_csv_safe(
-        data.frame(covariateId = auto_excluded_covariate_ids),
-        file.path(paths$debug, "debug_auto_excluded_covariate_ids.csv")
-      )
-    }
-
-    if (length(manual_excluded_covariate_ids) > 0) {
-      write_csv_safe(
-        data.frame(covariateId = manual_excluded_covariate_ids),
-        file.path(paths$debug, "debug_manual_excluded_covariate_ids.csv")
-      )
-    }
   }
 
   final_include_ids <- screening_results$selected_covariate_ids
   if (is.null(final_include_ids) || length(final_include_ids) == 0) {
     final_include_ids <- NULL
   } else {
-    final_include_ids <- as.integer(final_include_ids)
+    final_include_ids <- unique(as.numeric(final_include_ids))
     final_include_ids <- final_include_ids[!is.na(final_include_ids)]
   }
 
-  final_exclude_ids <- union(auto_excluded_covariate_ids, manual_excluded_covariate_ids)
-  if (is.null(final_exclude_ids) || length(final_exclude_ids) == 0) {
-    final_exclude_ids <- NULL
-  } else {
-    final_exclude_ids <- as.integer(final_exclude_ids)
-    final_exclude_ids <- final_exclude_ids[!is.na(final_exclude_ids)]
-  }
+  final_exclude_ids <- unique(c(auto_excluded_covariate_ids, manual_excluded_covariate_ids))
+  final_exclude_ids <- as.numeric(final_exclude_ids)
+  final_exclude_ids <- final_exclude_ids[!is.na(final_exclude_ids)]
 
-  if (!is.null(final_include_ids) && !is.null(final_exclude_ids)) {
+  if (!is.null(final_include_ids) && length(final_exclude_ids) > 0) {
     final_include_ids <- setdiff(final_include_ids, final_exclude_ids)
-    if (length(final_include_ids) == 0) {
-      final_include_ids <- NULL
-    }
   }
+  if (!is.null(final_include_ids) && length(final_include_ids) == 0) final_include_ids <- NULL
 
+  message(
+    "Auto-excluded covariate IDs: ",
+    if (length(auto_excluded_covariate_ids) == 0) "" else paste(auto_excluded_covariate_ids, collapse = ", ")
+  )
+  message(
+    "Manually excluded covariate IDs: ",
+    if (length(manual_excluded_covariate_ids) == 0) "" else paste(manual_excluded_covariate_ids, collapse = ", ")
+  )
   message("Final include covariate count: ", length(final_include_ids))
   message("Final exclude covariate count: ", length(final_exclude_ids))
 
+  if (isTRUE(output_config$save_debug_files)) {
+    write_csv_safe(high_correlation_table, file.path(paths$debug, "debug_high_correlation_table.csv"))
+    if (length(auto_excluded_covariate_ids) > 0) {
+      write_csv_safe(data.frame(covariateId = auto_excluded_covariate_ids), file.path(paths$debug, "debug_auto_excluded_covariate_ids.csv"))
+    }
+    if (length(manual_excluded_covariate_ids) > 0) {
+      write_csv_safe(data.frame(covariateId = manual_excluded_covariate_ids), file.path(paths$debug, "debug_manual_excluded_covariate_ids.csv"))
+    }
+  }
+
   ps_args <- CohortMethod::createCreatePsArgs(
     maxCohortSizeForFitting = ps_model_config$max_cohort_size_for_fitting,
-    errorOnHighCorrelation = TRUE,
+    errorOnHighCorrelation = FALSE,
     stopOnError = FALSE,
     prior = create_ps_prior(ps_model_config),
     includeCovariateIds = final_include_ids,
-    excludeCovariateIds = final_exclude_ids
+    excludeCovariateIds = NULL
   )
 
   ps <- CohortMethod::createPs(
@@ -644,37 +677,45 @@ fit_ps_model <- function(population,
     screening = screening_results,
     ps_model_coefficients = ps_model_coefficients,
     auto_excluded_covariate_ids = auto_excluded_covariate_ids,
-    manual_excluded_covariate_ids = manual_excluded_covariate_ids,
+    manually_excluded_covariate_ids = manual_excluded_covariate_ids,
+    final_include_ids = final_include_ids,
+    final_exclude_ids = final_exclude_ids,
     high_correlation_table = high_correlation_table
   )
 }
 
 apply_trimming_if_needed <- function(ps, adjustment_config) {
-  if (!isTRUE(adjustment_config$use_trimming)) {
-    return(ps)
-  }
+  if (!isTRUE(adjustment_config$use_trimming)) return(ps)
 
   trim_fraction <- max(
     adjustment_config$trimming_lower_percentile,
     1 - adjustment_config$trimming_upper_percentile
   )
 
-  trim_args <- CohortMethod::createTrimByPsArgs(
-    trimFraction = trim_fraction
-  )
+  trim_args <- CohortMethod::createTrimByPsArgs(trimFraction = trim_fraction)
+  CohortMethod::trimByPs(population = ps, trimByPsArgs = trim_args)
+}
 
-  CohortMethod::trimByPs(
-    population = ps,
-    trimByPsArgs = trim_args
-  )
+filter_covariate_balance <- function(covariate_balance, include_covariate_ids) {
+  if (is.null(covariate_balance) || !is.data.frame(covariate_balance) ||
+      nrow(covariate_balance) == 0 || is.null(include_covariate_ids) ||
+      length(include_covariate_ids) == 0 ||
+      !("covariateId" %in% names(covariate_balance))) {
+    return(covariate_balance)
+  }
+
+  include_covariate_ids <- unique(as.numeric(include_covariate_ids))
+  include_covariate_ids <- include_covariate_ids[!is.na(include_covariate_ids)]
+
+  covariate_balance[
+    as.numeric(covariate_balance$covariateId) %in% include_covariate_ids,
+    , drop = FALSE
+  ]
 }
 
 compute_balance_metrics <- function(covariate_balance) {
   if (is.null(covariate_balance) || nrow(covariate_balance) == 0) {
-    return(list(
-      max_abs_smd_after = NA_real_,
-      pct_above_0_1_after = NA_real_
-    ))
+    return(list(max_abs_smd_after = NA_real_, pct_above_0_1_after = NA_real_))
   }
 
   balance_column <- intersect(
@@ -683,20 +724,14 @@ compute_balance_metrics <- function(covariate_balance) {
   )
 
   if (length(balance_column) == 0) {
-    return(list(
-      max_abs_smd_after = NA_real_,
-      pct_above_0_1_after = NA_real_
-    ))
+    return(list(max_abs_smd_after = NA_real_, pct_above_0_1_after = NA_real_))
   }
 
   balance_values <- abs(covariate_balance[[balance_column[1]]])
   balance_values <- balance_values[is.finite(balance_values)]
 
   if (length(balance_values) == 0) {
-    return(list(
-      max_abs_smd_after = NA_real_,
-      pct_above_0_1_after = NA_real_
-    ))
+    return(list(max_abs_smd_after = NA_real_, pct_above_0_1_after = NA_real_))
   }
 
   list(
@@ -718,19 +753,23 @@ try_match <- function(ps, cm_data, caliper, match_ratio) {
 
   treated_before <- sum(ps$treatment == 1, na.rm = TRUE)
   treated_after <- sum(matched_population$treatment == 1, na.rm = TRUE)
-  match_rate <- if (treated_before > 0) treated_after / treated_before else 0
 
   list(
     matched_population = matched_population,
     caliper_used = caliper,
-    match_rate = match_rate
+    match_rate = if (treated_before > 0) treated_after / treated_before else 0
   )
 }
 
-build_matching_result <- function(result, cm_data) {
+build_matching_result <- function(result, cm_data, include_covariate_ids = NULL) {
   covariate_balance <- CohortMethod::computeCovariateBalance(
     cohortMethodData = cm_data,
     population = result$matched_population
+  )
+
+  covariate_balance <- filter_covariate_balance(
+    covariate_balance = covariate_balance,
+    include_covariate_ids = include_covariate_ids
   )
 
   list(
@@ -741,7 +780,16 @@ build_matching_result <- function(result, cm_data) {
   )
 }
 
-interpolate_and_match <- function(ps, cm_data, cal1, res1, cal2, res2, target_rate, tolerance, match_ratio) {
+interpolate_and_match <- function(ps,
+                                  cm_data,
+                                  cal1,
+                                  res1,
+                                  cal2,
+                                  res2,
+                                  target_rate,
+                                  tolerance,
+                                  match_ratio,
+                                  include_covariate_ids = NULL) {
   interp_fun <- stats::approxfun(
     x = c(res1$match_rate, res2$match_rate),
     y = c(cal1, cal2),
@@ -755,7 +803,7 @@ interpolate_and_match <- function(ps, cm_data, cal1, res1, cal2, res2, target_ra
   result_optimal <- try_match(ps, cm_data, caliper_optimal, match_ratio)
 
   if (abs(result_optimal$match_rate - target_rate) <= tolerance) {
-    return(build_matching_result(result_optimal, cm_data))
+    return(build_matching_result(result_optimal, cm_data, include_covariate_ids))
   }
 
   caliper_refine_low <- max(0.05, caliper_optimal - 0.02)
@@ -765,160 +813,120 @@ interpolate_and_match <- function(ps, cm_data, cal1, res1, cal2, res2, target_ra
   result_refine_high <- try_match(ps, cm_data, caliper_refine_high, match_ratio)
 
   all_results <- list(result_optimal, result_refine_low, result_refine_high)
-  best_idx <- which.min(sapply(all_results, function(r) abs(r$match_rate - target_rate)))
+  best_idx <- which.min(vapply(all_results, function(r) abs(r$match_rate - target_rate), numeric(1)))
 
-  build_matching_result(all_results[[best_idx]], cm_data)
+  build_matching_result(all_results[[best_idx]], cm_data, include_covariate_ids)
 }
 
 apply_matching <- function(ps,
                            cm_data,
                            adjustment_config,
-                           output_config) {
+                           output_config,
+                           include_covariate_ids = NULL) {
   if (isTRUE(adjustment_config$auto_caliper_search)) {
     message("[auto_caliper] Starting auto-caliper search...")
-    
+
     target_rate <- adjustment_config$target_match_rate %||% 0.65
     tolerance <- adjustment_config$target_match_rate_tolerance %||% 0.15
     match_ratio <- adjustment_config$match_ratio
 
     message(sprintf("[auto_caliper] Target: %.2f ± %.2f", target_rate, tolerance))
 
-    # Test 2 calipers de base
     caliper_test <- c(0.15, 0.25)
     results <- lapply(caliper_test, function(cal) {
       message(sprintf("[auto_caliper] Testing caliper %.2f...", cal))
       try_match(ps, cm_data, cal, match_ratio)
     })
-    
-    rates <- sapply(results, function(r) r$match_rate)
-    message(sprintf("[auto_caliper] Match rates: %.2f (cal=%.2f), %.2f (cal=%.2f)",
-                    rates[1], caliper_test[1], rates[2], caliper_test[2]))
 
-    # Cas 1: Target est entre les deux rates → interpolation
+    rates <- vapply(results, function(r) r$match_rate, numeric(1))
+    message(sprintf(
+      "[auto_caliper] Match rates: %.2f (cal=%.2f), %.2f (cal=%.2f)",
+      rates[1], caliper_test[1], rates[2], caliper_test[2]
+    ))
+
     if ((rates[1] <= target_rate && rates[2] >= target_rate) ||
         (rates[1] >= target_rate && rates[2] <= target_rate)) {
       message("[auto_caliper] Target is between the two rates, interpolating...")
-      return(interpolate_and_match(ps, cm_data, caliper_test[1], results[[1]], 
-                                   caliper_test[2], results[[2]],
-                                   target_rate, tolerance, match_ratio))
+      return(interpolate_and_match(
+        ps, cm_data,
+        caliper_test[1], results[[1]],
+        caliper_test[2], results[[2]],
+        target_rate, tolerance, match_ratio,
+        include_covariate_ids
+      ))
     }
 
-    # Cas 2: Les deux rates < target → besoin d'un caliper plus large
     if (rates[1] < target_rate && rates[2] < target_rate) {
       message("[auto_caliper] Both rates below target, testing wider caliper...")
-      
-      # Test calipers progressivement plus larges
       caliper_wide <- c(0.35, 0.50, 0.75)
       result_last <- NULL
+
       for (cal in caliper_wide) {
         result_wide <- try_match(ps, cm_data, cal, match_ratio)
         message(sprintf("[auto_caliper] Caliper %.2f → match rate: %.2f", cal, result_wide$match_rate))
-        
+
         if (result_wide$match_rate >= target_rate) {
-          # Trouvé ! Interpole entre le dernier étroit et ce large
-          last_narrow_idx <- if (caliper_test[2] < cal) 2 else 1
-          return(interpolate_and_match(ps, cm_data, caliper_test[last_narrow_idx], 
-                                       results[[last_narrow_idx]], cal, result_wide,
-                                       target_rate, tolerance, match_ratio))
+          return(interpolate_and_match(
+            ps, cm_data,
+            caliper_test[2], results[[2]],
+            cal, result_wide,
+            target_rate, tolerance, match_ratio,
+            include_covariate_ids
+          ))
         }
         result_last <- result_wide
       }
-      
-      # Aucun ne reach target → prends le meilleur (le plus large)
+
       message("[auto_caliper] Could not reach target, using widest caliper tested")
       all_results <- c(results, list(result_last))
-      best_idx <- which.max(sapply(all_results, function(r) r$match_rate))
-      return(build_matching_result(all_results[[best_idx]], cm_data))
+      best_idx <- which.max(vapply(all_results, function(r) r$match_rate, numeric(1)))
+      return(build_matching_result(all_results[[best_idx]], cm_data, include_covariate_ids))
     }
 
-    # Cas 3: Les deux rates > target → besoin d'un caliper plus strict
     if (rates[1] > target_rate && rates[2] > target_rate) {
       message("[auto_caliper] Both rates above target, testing stricter caliper...")
-      
-      # Test calipers progressivement plus stricts
       caliper_strict <- c(0.10, 0.05, 0.02)
       result_last <- NULL
+
       for (cal in caliper_strict) {
         result_strict <- try_match(ps, cm_data, cal, match_ratio)
         message(sprintf("[auto_caliper] Caliper %.2f → match rate: %.2f", cal, result_strict$match_rate))
-        
+
         if (result_strict$match_rate <= target_rate) {
-          # Trouvé ! Interpole entre ce strict et le moins étroit des larges
-          last_wide_idx <- if (rates[1] > rates[2]) 1 else 2
-          return(interpolate_and_match(ps, cm_data, cal, result_strict, 
-                                       caliper_test[last_wide_idx], results[[last_wide_idx]],
-                                       target_rate, tolerance, match_ratio))
+          return(interpolate_and_match(
+            ps, cm_data,
+            cal, result_strict,
+            caliper_test[1], results[[1]],
+            target_rate, tolerance, match_ratio,
+            include_covariate_ids
+          ))
         }
         result_last <- result_strict
       }
-      
-      # Aucun ne descend sous target → prends le plus strict testé
+
       message("[auto_caliper] Could not reach target, using strictest caliper tested")
       all_results <- c(results, list(result_last))
-      best_idx <- which.min(sapply(all_results, function(r) r$match_rate))
-      return(build_matching_result(all_results[[best_idx]], cm_data))
+      best_idx <- which.min(vapply(all_results, function(r) r$match_rate, numeric(1)))
+      return(build_matching_result(all_results[[best_idx]], cm_data, include_covariate_ids))
     }
 
-    # Fallback (ne devrait pas arriver)
     message("[auto_caliper] Unexpected state, using best of initial tests")
     best_idx <- which.min(abs(rates - target_rate))
-    return(build_matching_result(results[[best_idx]], cm_data))
+    return(build_matching_result(results[[best_idx]], cm_data, include_covariate_ids))
   }
 
-  # --- MODE MANUEL (fallback) ---
-  
-  match_once <- function(caliper_value) {
-    match_args <- CohortMethod::createMatchOnPsArgs(
-      caliper = caliper_value,
-      maxRatio = adjustment_config$match_ratio
-    )
+  result <- try_match(
+    ps = ps,
+    cm_data = cm_data,
+    caliper = adjustment_config$caliper,
+    match_ratio = adjustment_config$match_ratio
+  )
 
-    matched_population <- CohortMethod::matchOnPs(
-      population = ps,
-      matchOnPsArgs = match_args
-    )
-
-    covariate_balance <- CohortMethod::computeCovariateBalance(
-      cohortMethodData = cm_data,
-      population = matched_population
-    )
-
-    list(
-      matched_population = matched_population,
-      covariate_balance = covariate_balance,
-      caliper_used = caliper_value
-    )
-  }
-
-  initial_match <- match_once(adjustment_config$caliper)
-
-  matched_treated_n <- sum(initial_match$matched_population$treatment == 1, na.rm = TRUE)
-  original_treated_n <- sum(ps$treatment == 1, na.rm = TRUE)
-  matched_fraction <- if (original_treated_n > 0) matched_treated_n / original_treated_n else 0
-
-  final_match <- initial_match
-
-  if (isTRUE(adjustment_config$allow_caliper_adaptation) &&
-      matched_fraction < adjustment_config$low_match_rate_threshold) {
-    message(sprintf("[fallback] Low match rate (%.2f), relaxing caliper from %.2f to %.2f",
-                    matched_fraction, adjustment_config$caliper, 
-                    adjustment_config$caliper_if_low_match_rate))
-    final_match <- match_once(adjustment_config$caliper_if_low_match_rate)
-  } else {
-    balance_metrics <- compute_balance_metrics(initial_match$covariate_balance)
-
-    if (isTRUE(adjustment_config$allow_caliper_adaptation) &&
-        matched_fraction > adjustment_config$high_match_rate_threshold &&
-        is.finite(balance_metrics$pct_above_0_1_after) &&
-        balance_metrics$pct_above_0_1_after > adjustment_config$poor_balance_threshold) {
-      message(sprintf("[fallback] High match rate (%.2f) but poor balance (%.2f), tightening caliper from %.2f to %.2f",
-                      matched_fraction, balance_metrics$pct_above_0_1_after,
-                      adjustment_config$caliper, adjustment_config$caliper_if_poor_balance))
-      final_match <- match_once(adjustment_config$caliper_if_poor_balance)
-    }
-  }
-
-  final_match
+  build_matching_result(
+    result = result,
+    cm_data = cm_data,
+    include_covariate_ids = include_covariate_ids
+  )
 }
 
 fit_outcome_model <- function(adjusted_population,
@@ -929,7 +937,6 @@ fit_outcome_model <- function(adjusted_population,
     "[fit_outcome_model] prior_variance = ", outcome_model_config$prior_variance,
     ", use_cv = ", outcome_model_config$use_cross_validation
   )
-  paths <- get_output_paths(output_config)
 
   prior_outcome <- Cyclops::createPrior(
     priorType = "normal",
@@ -943,14 +950,11 @@ fit_outcome_model <- function(adjusted_population,
     prior = prior_outcome
   )
 
-  outcome_model <- CohortMethod::fitOutcomeModel(
+  CohortMethod::fitOutcomeModel(
     population = adjusted_population,
     cohortMethodData = cm_data,
     fitOutcomeModelArgs = outcome_args
   )
-
-  save_rds_safe(outcome_model, file.path(paths$final, "outcome_model.rds"))
-  outcome_model
 }
 
 build_analysis_summary <- function(cfg,
@@ -1016,7 +1020,6 @@ build_matching_summary <- function(study_population,
   comparator_before <- sum(study_population$treatment == 0, na.rm = TRUE)
   treated_after <- sum(matched_population$treatment == 1, na.rm = TRUE)
   comparator_after <- sum(matched_population$treatment == 0, na.rm = TRUE)
-
   balance_metrics <- compute_balance_metrics(covariate_balance)
 
   data.frame(
@@ -1026,31 +1029,10 @@ build_matching_summary <- function(study_population,
     comparator_after_matching = comparator_after,
     treated_match_fraction = if (treated_before > 0) treated_after / treated_before else NA_real_,
     comparator_match_fraction = if (comparator_before > 0) comparator_after / comparator_before else NA_real_,
-    match_rate = match_rate %||% (if (treated_before > 0) treated_after / treated_before else NA_real_),
+    match_rate = match_rate %||% if (treated_before > 0) treated_after / treated_before else NA_real_,
     max_abs_smd_after = balance_metrics$max_abs_smd_after,
     pct_covariates_abs_smd_gt_0_1_after = balance_metrics$pct_above_0_1_after
   )
-}
-
-save_analysis_outputs <- function(output_config,
-                                  analysis_summary,
-                                  matching_summary,
-                                  adjusted_population,
-                                  covariate_balance,
-                                  ps_model_coefficients,
-                                  pipeline_artifacts) {
-  paths <- get_output_paths(output_config)
-
-  write_csv_safe(analysis_summary, file.path(paths$final, "analysis_summary.csv"))
-  write_csv_safe(matching_summary, file.path(paths$final, "matching_summary.csv"))
-
-  if (!is.null(ps_model_coefficients) && nrow(ps_model_coefficients) > 0) {
-    write_csv_safe(ps_model_coefficients, file.path(paths$final, "ps_model_coefficients.csv"))
-  }
-
-  save_rds_safe(adjusted_population, file.path(paths$final, "adjusted_population.rds"))
-  save_rds_safe(covariate_balance, file.path(paths$final, "covariate_balance.rds"))
-  save_rds_safe(pipeline_artifacts, file.path(paths$final, "pipeline_artifacts.rds"))
 }
 
 log_generated_cohort_counts <- function(connection_details, cohorts_config) {
@@ -1066,20 +1048,17 @@ log_generated_cohort_counts <- function(connection_details, cohorts_config) {
       ),
       collapse = ", "
     ),
-    ") ",
-    "GROUP BY cohort_definition_id ",
-    "ORDER BY cohort_definition_id"
+    ") GROUP BY cohort_definition_id ORDER BY cohort_definition_id"
   )
 
   conn <- DatabaseConnector::connect(connection_details)
   on.exit(DatabaseConnector::disconnect(conn), add = TRUE)
-
   DatabaseConnector::querySql(conn, sql)
 }
 
 run_primary_ple_pipeline <- function(cfg) {
   check_required_packages()
-  paths <- get_output_paths(cfg$output)
+  get_output_paths(cfg$output)
 
   connection_details <- create_connection_details(cfg$connection)
 
@@ -1117,17 +1096,18 @@ run_primary_ple_pipeline <- function(cfg) {
     output_config = cfg$output
   )
 
-  ps_for_adjustment <- apply_trimming_if_needed(
-    ps = ps_fit$ps,
-    adjustment_config = cfg$adjustment
-  )
+  ps_before_matching <- ps_fit$ps
+  ps_for_adjustment <- apply_trimming_if_needed(ps_fit$ps, cfg$adjustment)
 
   matching_result <- apply_matching(
     ps = ps_for_adjustment,
     cm_data = cm_data,
     adjustment_config = cfg$adjustment,
-    output_config = cfg$output
+    output_config = cfg$output,
+    include_covariate_ids = ps_fit$final_include_ids
   )
+
+  ps_after_matching <- matching_result$matched_population
 
   outcome_model <- fit_outcome_model(
     adjusted_population = matching_result$matched_population,
@@ -1157,6 +1137,8 @@ run_primary_ple_pipeline <- function(cfg) {
     covariate_balance = matching_result$covariate_balance,
     caliper_used = matching_result$caliper_used,
     match_rate = matching_result$match_rate,
+    final_include_ids = ps_fit$final_include_ids,
+    final_exclude_ids = ps_fit$final_exclude_ids,
     outcome_model = outcome_model,
     analysis_summary = analysis_summary,
     matching_summary = matching_summary
@@ -1166,23 +1148,23 @@ run_primary_ple_pipeline <- function(cfg) {
     output_config = cfg$output,
     analysis_summary = analysis_summary,
     matching_summary = matching_summary,
+    ps_before_matching = ps_before_matching,
+    ps_after_matching = ps_after_matching,
     adjusted_population = matching_result$matched_population,
     covariate_balance = matching_result$covariate_balance,
     ps_model_coefficients = ps_fit$ps_model_coefficients,
     pipeline_artifacts = pipeline_artifacts
   )
 
-  invisible(
-    list(
-      adjusted_population = matching_result$matched_population,
-      covariate_balance = matching_result$covariate_balance,
-      caliper_used = matching_result$caliper_used,
-      match_rate = matching_result$match_rate,
-      outcome_model = outcome_model,
-      analysis_summary = analysis_summary,
-      matching_summary = matching_summary
-    )
-  )
+  invisible(list(
+    adjusted_population = matching_result$matched_population,
+    covariate_balance = matching_result$covariate_balance,
+    caliper_used = matching_result$caliper_used,
+    match_rate = matching_result$match_rate,
+    outcome_model = outcome_model,
+    analysis_summary = analysis_summary,
+    matching_summary = matching_summary
+  ))
 }
 
 run_pipeline_safe <- function(cfg) {
@@ -1191,8 +1173,6 @@ run_pipeline_safe <- function(cfg) {
       run_primary_ple_pipeline(cfg)
       list(success = TRUE, error = NULL)
     },
-    error = function(e) {
-      list(success = FALSE, error = conditionMessage(e))
-    }
+    error = function(e) list(success = FALSE, error = conditionMessage(e))
   )
 }
