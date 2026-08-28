@@ -74,10 +74,11 @@ The pipeline implemented in `run_pipeline_shiny.R` (and reused by `app.R` and `d
    - Allow interactive selection of **forced covariates** (always included in the PS model) and **excluded covariates** (always excluded).
    - Support covariate expansion by concept ID or ancestor hierarchy (family-level selection).
 
-4. **Covariate pre-screening**
+4. **Covariate pre-screening (stability selection)**
    - Optionally run multiple covariate screening passes on subsamples to reduce dimensionality.
    - Retain top covariates per run based on model coefficients.
-   - Merge selected covariates across runs.
+   - Keep only covariates selected in at least *K* prescreening runs (configurable, e.g. 3 out of 10).
+   - Log selection frequency for each covariate (how many runs it was selected in).
 
 5. **High-correlation covariate exclusion**
    - Automatically detect and exclude covariates with near-perfect correlation with treatment (e.g., cohort definition covariates with analysisId 410, 412, 413).
@@ -132,9 +133,9 @@ Within the app:
 ### Advanced tuning tab
 
 - **Cohort and output settings**: JSON folder, output folder, additional outcome IDs, study period.
-- **Pre-screening**: number of runs, covariates retained per run, minimum subjects per group.
+- **Pre-screening**: number of runs, covariates retained per run, minimum subjects per group, minimum selection frequency.
 - **Auto-caliper search**: enable/disable, target match rate, tolerance.
-- **Manual matching options** (if auto-caliper disabled): fixed caliper, adaptation rules.
+- **Manual matching options** (if auto-caliper disabled): fixed caliper.
 - **Trimming**: propensity score trimming percentiles.
 - **Outcome model**: prior variance, cross-validation.
 - **Technical settings**: CDM schema, cohort table.
@@ -185,15 +186,14 @@ The pipeline includes an automatic caliper search that:
 
 - **Forced covariates**: Always included in the PS model (e.g., known confounders).
 - **Excluded covariates**: Always excluded from the PS model (e.g., artefacts, cohort definition covariates).
-- **Auto-excluded covariates**: Covariates with near-perfect correlation with treatment (analysisId 410, 412, 413) are automatically detected and excluded.
+- **Auto-excluded covariates**: Covariates with near-perfect correlation with treatment are automatically detected and excluded.
 - **Covariate expansion**: Add all covariates sharing the same concept ID or ancestor hierarchy.
 
-### Covariate pre-screening
+### Stability selection for covariates
 
-- Runs multiple screening passes on subsamples.
-- Retains top covariates per run based on model coefficients.
-- Merges selected covariates across runs.
-- Configurable: number of runs (default: 3), covariates per run (default: 500).
+- Uses repeated prescreening to assess how often each covariate is selected.
+- Retains only covariates that appear in at least *K* runs, improving robustness to sampling variability.
+- Provides a `covariate_selection_frequency.csv` file to inspect which covariates are stable vs borderline.
 
 ## Status and limitations
 
