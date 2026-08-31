@@ -780,7 +780,7 @@ fit_ps_model <- function(population,
     stopOnError = FALSE,
     prior = create_ps_prior(ps_model_config),
     includeCovariateIds = final_include_ids,
-    excludeCovariateIds = NULL
+    excludeCovariateIds = final_exclude_ids
   )
 
   ps <- CohortMethod::createPs(
